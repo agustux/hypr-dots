@@ -95,7 +95,7 @@ if ! command -v yay &> /dev/null; then
 fi
 
 # Removing actual bloat
-BLOAT_PKGS=(polkit-kde-agent wofi kwallet dolphin uwsm kitty)
+BLOAT_PKGS=(polkit-kde-agent wofi kwallet dolphin uwsm kitty htop)
 TO_REMOVE=()
 for pkg in "${BLOAT_PKGS[@]}"; do
   pacman -Qq "$pkg" &> /dev/null && TO_REMOVE+=("$pkg")
