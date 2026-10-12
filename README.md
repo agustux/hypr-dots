@@ -19,6 +19,7 @@ Flags:
 - `--nvidia`  Install NVIDIA drivers/config
 - `--gnome`   Install GNOME and switch the display manager from ly to GDM, still installs rest
 - `--bloat`   Install Gus-curated extra tools and utilities, including the NVIDIA driver and GNOME stuff
+- `--foot`    Install foot instead of Ghostty as the terminal
 
 The installer may modify your system configuration and will install
 packages. Review install.sh before running it if you want to see exactly
@@ -32,7 +33,7 @@ what will be changed.
 
 | Keys | Action |
 |---|---|
-| `Super + Q` | Terminal (Ghostty) |
+| `Super + Q` | Terminal (Ghostty, or foot if used `--foot`) |
 | `Super + E` | Fil**e** manager (Nautilus) |
 | `Super + B` | **B**rowser (**B**rave Origin) |
 | `Super + R` | Launche**r** (**r**ofi) |
