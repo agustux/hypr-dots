@@ -59,8 +59,10 @@ FORCE_NVIDIA=0
 BLOAT=0
 GNOME=0
 FOOT=0
+NOSWAP=0
 for arg in "$@"; do
   case "$arg" in
+    --noswap) NOSWAP=1 ;;
     --foot) FOOT=1 ;;
     --nvidia) FORCE_NVIDIA=1 ;;
     --bloat) BLOAT=1 ;;
@@ -190,7 +192,7 @@ fi
 ####################################################################################################
 
 # Adding Swapfile
-if [ ! -f /swapfile ]; then
+if [ "$NOSWAP" -eq 0 ] && [ ! -f /swapfile ]; then
   sudo dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
   sudo chmod 600 /swapfile
   sudo mkswap /swapfile

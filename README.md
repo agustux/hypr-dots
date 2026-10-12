@@ -20,6 +20,7 @@ Flags:
 - `--gnome`   Install GNOME and switch the display manager from ly to GDM, still installs rest
 - `--bloat`   Install Gus-curated extra tools and utilities, including the NVIDIA driver and GNOME stuff
 - `--foot`    Install foot instead of Ghostty as the terminal
+- `--noswap`  Skip creating the 4GB swapfile, for really storage constrained systems 
 
 The installer may modify your system configuration and will install
 packages. Review install.sh before running it if you want to see exactly
