@@ -58,8 +58,10 @@ lspci -d 14e4: | grep -qi network && NEEDS_BROADCOM_WL=1
 FORCE_NVIDIA=0
 BLOAT=0
 GNOME=0
+FOOT=0
 for arg in "$@"; do
   case "$arg" in
+    --foot) FOOT=1 ;;
     --nvidia) FORCE_NVIDIA=1 ;;
     --bloat) BLOAT=1 ;;
     --gnome) GNOME=1 ;;
@@ -103,7 +105,11 @@ yay -S --needed --noconfirm hyprland xdg-desktop-portal-gtk xdg-desktop-portal-h
     hyprpolkitagent hyprlock hypridle hyprpaper hyprshot hyprshutdown wl-clipboard dunst brightnessctl
 
 # Terminal
-yay -S --needed --noconfirm ghostty
+if [ "$FOOT" -eq 1 ]; then
+  yay -S --needed --noconfirm foot
+else
+  yay -S --needed --noconfirm ghostty
+fi
 
 # Basic Hyprland Packages (AUR)
 yay -S --needed --noconfirm hyprqt6engine
@@ -328,6 +334,16 @@ for d in gtk-3.0 gtk-4.0; do
   sed "s|@USER@|$USER|g" "$HOME/.config/$d/bookmarks.tmpl" > "$HOME/.config/$d/bookmarks"
   rm "$HOME/.config/$d/bookmarks.tmpl"
 done
+
+# Swapping terminal to foot (foot has no --gtk-single-instance flag)
+if [ "$FOOT" -eq 1 ]; then
+  sed -i -e 's|^local var_terminal = .*|local var_terminal = "foot"|' \
+         -e 's|^local var_terminal_flags = .*|local var_terminal_flags = ""|' \
+         "$HOME/.config/hypr/hyprland.lua"
+fi
+
+# Rewriting hardcoded home path for QT
+sed "s|@HOME@|$HOME|g" ~/.config/hypr/hyprqt6engine.conf.tmpl > ~/.config/hypr/hyprqt6engine.conf
 
 # Setting VT color scheme
 set_param vt.default_red "30,243,166,249,137,245,148,205,88,243,166,249,137,245,148,166"
