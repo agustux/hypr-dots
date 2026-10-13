@@ -40,10 +40,7 @@
         "format": "{icon}  {capacity}%",
         "format-charging": " {capacity}%",
         "format-plugged": " {capacity}%",
-        "format-icons": ["", "", "", "", ""],
-        
-
-        "on-click": "~/.config/waybar/scripts/power-profiles.sh"
+        "format-icons": ["", "", "", "", ""]
     },
 
     "clock": {
