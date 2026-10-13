@@ -13,7 +13,7 @@ This should preferably run after a clean arch install
 
 ### Quickstart:
 ```
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/agustux/hypr-dots/main/install.sh)"
+curl -fsSL https://raw.githubusercontent.com/agustux/hypr-dots/main/install.sh | bash -s -- <flags here>
 ```
 Flags:
 - `--nvidia`  Install NVIDIA drivers/config
