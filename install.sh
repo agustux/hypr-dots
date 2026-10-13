@@ -248,7 +248,7 @@ if [ "$IS_CHROMEBOOK" -eq 1 ]; then
   yay -S --needed --noconfirm alsa-utils
   TMP_DIR=$(mktemp -d)
   git clone --depth 1 https://github.com/WeirdTreeThing/chromebook-linux-audio "$TMP_DIR/audio" \
-      && (cd "$TMP_DIR/audio" && ./setup-audio)
+      && (cd "$TMP_DIR/audio" && printf '1\nsst\n' | ./setup-audio)
   git clone --depth 1 https://github.com/WeirdTreeThing/cros-keyboard-map "$TMP_DIR/kbd" \
       && (cd "$TMP_DIR/kbd" && echo "n" | ./install.sh)
   rm -rf "$TMP_DIR"
