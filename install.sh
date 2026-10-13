@@ -347,6 +347,9 @@ fi
 # Rewriting hardcoded home path for QT
 sed "s|@HOME@|$HOME|g" ~/.config/hypr/hyprqt6engine.conf.tmpl > ~/.config/hypr/hyprqt6engine.conf
 
+# Quieting kernel messages on the console
+set_param loglevel 3
+
 # Setting VT color scheme
 set_param vt.default_red "30,243,166,249,137,245,148,205,88,243,166,249,137,245,148,166"
 set_param vt.default_grn "30,139,227,226,180,194,226,214,91,139,227,226,180,194,226,173"
