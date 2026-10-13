@@ -364,7 +364,12 @@ sudo sed -i 's|^#GRUB_TERMINAL_OUTPUT=.*|GRUB_TERMINAL_OUTPUT=gfxterm|' /etc/def
 sudo sed -i 's|^#\?GRUB_THEME=.*|GRUB_THEME="/boot/grub/themes/catppuccin-mocha/theme.txt"|' /etc/default/grub
 sudo sed -i 's|^GRUB_TERMINAL_INPUT=console|#GRUB_TERMINAL_INPUT=console|' /etc/default/grub
 sudo sed -i 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=15/' /etc/default/grub
+# Drop GRUB's per-firmware-entry (EFI BootNext) menu entries; keep "UEFI Firmware Settings"
+grep -q '^NoExtract.*_efi_bootnext' /etc/pacman.conf || \
+  sudo sed -i '/^\[options\]/a NoExtract = etc/grub.d/*_efi_bootnext' /etc/pacman.conf
+sudo rm -f /etc/grub.d/*_efi_bootnext
 sudo grub-mkconfig -o /boot/grub/grub.cfg
+
 
 # Linking .config's ly config to /etc
 sudo ln -sf "$HOME/.config/ly/config.ini" /etc/ly/config.ini
