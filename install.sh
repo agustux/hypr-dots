@@ -90,12 +90,16 @@ fi
 
 # Installing yay (AUR helper):
 if ! command -v yay &> /dev/null; then
-  sudo pacman -Sy --needed --noconfirm git base-devel && git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin && makepkg -si --needed --noconfirm
-  cd ../ && rm -rf yay-bin/
+  cd "$HOME" || exit 1
+  sudo pacman -Sy --needed --noconfirm git base-devel \
+    && git clone https://aur.archlinux.org/yay-bin.git && cd yay-bin \
+    && makepkg -s --needed --noconfirm \
+    && sudo pacman -U --needed --noconfirm yay-bin-*.pkg.tar.*
+  cd "$HOME" && rm -rf yay-bin/
 fi
 
 # Removing actual bloat
-BLOAT_PKGS=(polkit-kde-agent wofi kwallet dolphin uwsm kitty htop)
+BLOAT_PKGS=(polkit-kde-agent wofi kwallet dolphin uwsm kitty htop power-profiles-daemon)
 TO_REMOVE=()
 for pkg in "${BLOAT_PKGS[@]}"; do
   pacman -Qq "$pkg" &> /dev/null && TO_REMOVE+=("$pkg")
@@ -133,7 +137,7 @@ yay -S --needed --noconfirm ttf-dejavu ttf-jetbrains-mono-nerd ttf-nerd-fonts-sy
 yay -S --needed --noconfirm rofi-bluetooth-git
 
 # Network / Bluetooth / Power Utils
-yay -S --needed --noconfirm networkmanager-dmenu power-profiles-daemon tlp pavucontrol \
+yay -S --needed --noconfirm networkmanager-dmenu tlp pavucontrol \
     nm-connection-editor blueman
 
 # GUI Utilities
@@ -201,8 +205,6 @@ if [ "$NOSWAP" -eq 0 ] && [ ! -f /swapfile ]; then
 fi
 
 # Configuring TLP:
-sudo systemctl disable power-profiles-daemon.service
-sudo systemctl mask power-profiles-daemon.service
 sudo systemctl enable tlp.service
 sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
 sudo mkdir -p /etc/tlp.d
@@ -387,4 +389,4 @@ orphans=$(yay -Qtdq 2>/dev/null)
 [ -n "$orphans" ] && yay -Rns --noconfirm $orphans
 yay -Scc --noconfirm
 
-echo "Everything seems to have been applied successfully, reboot for the changes to take effect"
+echo  -e "\nEverything seems to have been applied successfully, reboot for the changes to take effect"
