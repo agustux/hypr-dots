@@ -245,6 +245,14 @@ daemon tjoffset
 EOF
 fi
 
+# UFW rules and fix for localsend
+if [ "$BLOAT" -eq 1 ]; then
+  sudo ufw allow 53317/tcp
+  sudo ufw allow 53317/udp
+fi
+sudo systemctl enable --now ufw.service
+sudo ufw --force enable
+
 # Chrultrabook Fixes (if chromebook)
 if [ "$IS_CHROMEBOOK" -eq 1 ]; then
   yay -S --needed --noconfirm alsa-utils
@@ -263,6 +271,8 @@ if [ "$NVIDIA" -eq 1 ]; then
   NVIDIA_LEGACY=0
   if [ "$BLOAT" -eq 1 ]; then
       NVIDIA_LEGACY=0   # --bloat: skip detection, always open driver
+  elif [ -z "$GPU_NAME" ]; then
+      NVIDIA_LEGACY=0   # No NVIDIA GPU present (user override): open driver
   elif echo "$GPU_NAME" | grep -qPi 'RTX\s*[2-9][0-9]{3}|GTX\s*16[0-9]{2}|TITAN RTX|Tesla T4|Quadro T[0-9]{3,4}'; then
       NVIDIA_LEGACY=0   # Turing+
   elif echo "$GPU_NAME" | grep -qPi 'GTX\s*(9[0-9]{2}|10[0-9]{2})|GTX\s*750\s*Ti|Quadro [MP][0-9]{3,4}|TITAN\s*(X|Xp|V)\b|Tesla [MPV][0-9]+|GP100'; then
