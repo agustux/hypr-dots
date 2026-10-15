@@ -399,4 +399,5 @@ orphans=$(yay -Qtdq 2>/dev/null)
 [ -n "$orphans" ] && yay -Rns --noconfirm $orphans
 yay -Scc --noconfirm
 
-echo  -e "\nEverything seems to have been applied successfully, reboot for the changes to take effect"
+echo -e "\n\033[0;32mEverything seems to have been applied successfully, reboot for the changes to take effect\033[0m"
+
