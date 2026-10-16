@@ -162,7 +162,7 @@ yay -S --needed --noconfirm neovim ripgrep fd tree-sitter-cli lua-language-serve
 # GNOME
 if [ "$GNOME" -eq 1 ]; then
   yay -S --needed --noconfirm gdm gnome-shell gnome-control-center gnome-session \
-      xdg-desktop-portal-gnome dconf
+      gnome-backgrounds xdg-desktop-portal-gnome dconf
 fi
 
 # Broadcom Wifi MacBook Fixes
