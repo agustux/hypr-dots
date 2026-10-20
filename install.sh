@@ -84,6 +84,10 @@ else
   fi
 fi
 
+# Kernel header detection (matches every installed kernel via its pkgbase: linux, linux-lts, linux-zen)
+mapfile -t KERNEL_HEADERS < <(cat /usr/lib/modules/*/pkgbase 2>/dev/null | sort -u | sed 's/$/-headers/')
+[ "${#KERNEL_HEADERS[@]}" -eq 0 ] && KERNEL_HEADERS=(linux-headers)
+
 ####################################################################################################
 # PACKAGE INSTALLS
 ####################################################################################################
@@ -152,8 +156,8 @@ yay -S --needed --noconfirm curl less man-db ufw rsync powertop nvtop zip unzip 
     cpupower fastfetch
 
 # Support Libraries
-yay -S --needed --noconfirm bash-completion tar-scripts exfat-utils libcamera gst-plugin-libcamera \
-    pipewire-libcamera libcamera-tools libcamera-ipa xorg-xhost sof-firmware
+yay -S --needed --noconfirm "${KERNEL_HEADERS[@]}" bash-completion tar-scripts exfat-utils libcamera \
+    gst-plugin-libcamera pipewire-libcamera libcamera-tools libcamera-ipa xorg-xhost sof-firmware
 
 # Neovim Packages
 yay -S --needed --noconfirm neovim ripgrep fd tree-sitter-cli lua-language-server \
@@ -282,9 +286,9 @@ if [ "$NVIDIA" -eq 1 ]; then
   fi
 
   if [ "$NVIDIA_LEGACY" -eq 1 ]; then
-      yay -S --needed --noconfirm nvidia-580xx-dkms nvidia-580xx-utils lib32-nvidia-580xx-utils linux-headers
+      yay -S --needed --noconfirm nvidia-580xx-dkms nvidia-580xx-utils lib32-nvidia-580xx-utils
   else
-      yay -S --needed --noconfirm nvidia-utils lib32-nvidia-utils nvidia-open-dkms linux-headers
+      yay -S --needed --noconfirm nvidia-utils lib32-nvidia-utils nvidia-open-dkms
   fi
 
   sudo systemctl enable nvidia-resume
@@ -324,6 +328,7 @@ if [ "$GNOME" -eq 1 ]; then
     gsettings set org.gnome.settings-daemon.plugins.power power-button-action "interactive"
     gsettings set org.gnome.desktop.peripherals.touchpad disable-while-typing false
     gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
+    gsettings set org.gnome.desktop.interface accent-color "blue"
   '
 fi
 
