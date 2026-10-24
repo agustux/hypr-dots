@@ -413,6 +413,14 @@ hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"
     repeating = true,
     locked = true,
 })
+hl.bind("XF86KbdBrightnessUp", hl.dsp.exec_cmd("brightnessctl -d '*kbd_backlight' set 10%+"), {
+    repeating = true,
+    locked = true,
+})
+hl.bind("XF86KbdBrightnessDown", hl.dsp.exec_cmd("brightnessctl -d '*kbd_backlight' set 10%-"), {
+    repeating = true,
+    locked = true,
+})
 
 -- Requires playerctl
 hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), {
