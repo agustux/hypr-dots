@@ -120,15 +120,21 @@ local function detect_capped_mode(output)
 		f=$(ls -d /sys/class/drm/card*-%s 2>/dev/null | head -n1)
 		[ -n "$f" ] && cat "$f/modes"
 	]], output))
-	local native, best
+	local native, nw, nh, best
 	for line in h:lines() do
 		local w, hgt = line:match("(%d+)x(%d+)")
 		w, hgt = tonumber(w), tonumber(hgt)
-		if not native then native = line end
-		if w and hgt and hgt <= 1080 and not best then best = line end
+		if w and hgt then
+			if not native then native, nw, nh = line, w, hgt end
+			if not best and w <= 1920 and math.abs(w / hgt - nw / nh) < 0.01 then best = line end
+		end
 	end
 	h:close()
-	return best or native or "preferred"
+	if best then return best end
+	if nw and nw > 1920 then
+		return string.format("1920x%d", math.floor(1920 * nh / nw + 0.5))
+	end
+	return native or "preferred"
 end
 
 -- === MONITORS ===
