@@ -50,9 +50,15 @@ IS_CHROMEBOOK=0
 [ -e /dev/cros_ec ] && IS_CHROMEBOOK=1
 [ -d /sys/bus/platform/devices/GOOG*/ ] 2>/dev/null && IS_CHROMEBOOK=1
 
-# Broadcom wifi detection (vendor ID 14e4 = Broadcom)
+# T2 Mac detection (106b:1801 = Apple T2 Bridge Controller)
+IS_T2=0
+lspci -d 106b:1801 | grep -q . && IS_T2=1
+
+# Broadcom wifi detection (vendor ID 14e4 = Broadcom); skipped on T2 (handled manually)
 NEEDS_BROADCOM_WL=0
-lspci -d 14e4: | grep -qi network && NEEDS_BROADCOM_WL=1
+[ "$IS_T2" -eq 0 ] && lspci -d 14e4: | grep -qi network && NEEDS_BROADCOM_WL=1
+
+[ "$IS_T2" -eq 1 ] && UNDERVOLT_SUPPORTED=0
 
 # Parse flags (for non-interactive runs)
 FORCE_NVIDIA=0
@@ -181,6 +187,11 @@ if [ "$IS_INTEL" -eq 1 ] || [ "$BLOAT" -eq 1 ]; then
   if [ "$UNDERVOLT_SUPPORTED" -eq 1 ]; then
     yay -S --needed --noconfirm intel-undervolt
   fi
+fi
+
+# T2 Mac
+if [ "$IS_T2" -eq 1 ]; then
+  yay -S --needed --noconfirm t2fanrd
 fi
 
 # Full Gus Packages
@@ -315,6 +326,34 @@ ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0302
 EOF
 fi
 # End NVIDIA stuff for hyprland
+
+# T2 Mac
+if [ "$IS_T2" -eq 1 ]; then
+  set_param intel_iommu on
+  set_param iommu pt
+  set_param pm_async off
+
+  echo t2bce_vhci | sudo tee /etc/modules-load.d/t2.conf > /dev/null
+
+  # Early-load modules (reverse order: each is prepended)
+  for m in t2bce_vhci t2bce_core t2bce_dma; do
+    grep -qE "^MODULES=\(.*\b$m\b" /etc/mkinitcpio.conf \
+      || sudo sed -i -E "s/^MODULES=\(/MODULES=($m /" /etc/mkinitcpio.conf
+  done
+  sudo mkinitcpio -P
+
+  # Audio
+  T2_AUDIO=$(mktemp -d)
+  git clone --depth 1 https://github.com/kekrby/t2-better-audio.git "$T2_AUDIO" \
+    && (cd "$T2_AUDIO" && ./install.sh)
+  rm -rf "$T2_AUDIO"
+
+  # Fan: daemon generates /etc/t2fand.conf on first start
+  sudo systemctl enable --now t2fanrd
+  sleep 2
+  sudo sed -i -E 's/^speed_curve\s*=.*/speed_curve=logarithmic/' /etc/t2fand.conf
+  sudo systemctl restart t2fanrd
+fi
 
 # GNOME
 if [ "$GNOME" -eq 1 ]; then
