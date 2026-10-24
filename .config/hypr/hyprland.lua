@@ -329,6 +329,11 @@ hl.bind("PRINT", hl.dsp.exec_cmd("hyprshot -m region -o $HOME/Pictures/Screensho
 hl.bind("ALT + PRINT", hl.dsp.exec_cmd("hyprshot -m window -o $HOME/Pictures/Screenshots/"))
 hl.bind(var_mainMod .. " + PRINT", hl.dsp.exec_cmd("hyprshot -m output -m " .. detect_primary_output() .. " -o $HOME/Pictures/Screenshots/"))
 
+-- Screenshots for keyboards without PrtSc
+hl.bind(var_mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("hyprshot -m region -o $HOME/Pictures/Screenshots/"))
+hl.bind(var_mainMod .. " + ALT + P", hl.dsp.exec_cmd("hyprshot -m window -o $HOME/Pictures/Screenshots/"))
+hl.bind(var_mainMod .. " + CTRL + P", hl.dsp.exec_cmd("hyprshot -m output -m " .. detect_primary_output() .. " -o $HOME/Pictures/Screenshots/"))
+
 hl.bind(var_mainMod .. " + C", hl.dsp.window.close())
 hl.bind(var_mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(var_mainMod .. " + T", hl.dsp.layout("togglesplit"))
