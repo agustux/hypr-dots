@@ -120,15 +120,21 @@ local function detect_capped_mode(output)
 		f=$(ls -d /sys/class/drm/card*-%s 2>/dev/null | head -n1)
 		[ -n "$f" ] && cat "$f/modes"
 	]], output))
-	local native, best
+	local native, nw, nh, best
 	for line in h:lines() do
 		local w, hgt = line:match("(%d+)x(%d+)")
 		w, hgt = tonumber(w), tonumber(hgt)
-		if not native then native = line end
-		if w and hgt and hgt <= 1080 and not best then best = line end
+		if w and hgt then
+			if not native then native, nw, nh = line, w, hgt end
+			if not best and w <= 1920 and math.abs(w / hgt - nw / nh) < 0.01 then best = line end
+		end
 	end
 	h:close()
-	return best or native or "preferred"
+	if best then return best end
+	if nw and nw > 1920 then
+		return string.format("1920x%d", math.floor(1920 * nh / nw + 0.5))
+	end
+	return native or "preferred"
 end
 
 -- === MONITORS ===
@@ -329,6 +335,11 @@ hl.bind("PRINT", hl.dsp.exec_cmd("hyprshot -m region -o $HOME/Pictures/Screensho
 hl.bind("ALT + PRINT", hl.dsp.exec_cmd("hyprshot -m window -o $HOME/Pictures/Screenshots/"))
 hl.bind(var_mainMod .. " + PRINT", hl.dsp.exec_cmd("hyprshot -m output -m " .. detect_primary_output() .. " -o $HOME/Pictures/Screenshots/"))
 
+-- Screenshots for keyboards without PrtSc
+hl.bind(var_mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("hyprshot -m region -o $HOME/Pictures/Screenshots/"))
+hl.bind(var_mainMod .. " + ALT + P", hl.dsp.exec_cmd("hyprshot -m window -o $HOME/Pictures/Screenshots/"))
+hl.bind(var_mainMod .. " + CTRL + P", hl.dsp.exec_cmd("hyprshot -m output -m " .. detect_primary_output() .. " -o $HOME/Pictures/Screenshots/"))
+
 hl.bind(var_mainMod .. " + C", hl.dsp.window.close())
 hl.bind(var_mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(var_mainMod .. " + T", hl.dsp.layout("togglesplit"))
@@ -410,6 +421,14 @@ hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"),
     locked = true,
 })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), {
+    repeating = true,
+    locked = true,
+})
+hl.bind("XF86KbdBrightnessUp", hl.dsp.exec_cmd("brightnessctl -d '*kbd_backlight' set 10%+"), {
+    repeating = true,
+    locked = true,
+})
+hl.bind("XF86KbdBrightnessDown", hl.dsp.exec_cmd("brightnessctl -d '*kbd_backlight' set 10%-"), {
     repeating = true,
     locked = true,
 })
