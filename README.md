@@ -49,6 +49,9 @@ what will be changed.
 | `Print` | Region |
 | `Alt + Print` | Window |
 | `Super + Print` | Primary output |
+| `Super + Shift + P` | Region |
+| `Super + Alt + P` | Window |
+| `Super + Ctrl + P` | Primary output |
 
 ### Windows
 
