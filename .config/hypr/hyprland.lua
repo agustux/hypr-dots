@@ -6,6 +6,13 @@ local var_terminal_flags = "--gtk-single-instance=true"
 local var_fileManager = "nautilus"
 local var_browser = "brave-origin"
 
+-- Untracked per-machine overrides (~/.config/hypr/local.lua)
+local ok, localcfg = pcall(dofile, os.getenv("HOME") .. "/.config/hypr/local.lua")
+if ok and type(localcfg) == "table" then
+    var_terminal = localcfg.terminal or var_terminal
+    var_terminal_flags = localcfg.terminal_flags or var_terminal_flags
+end
+
 -- === HELPER FUNCTIONS ===
 
 local function detect_igpu_card()
