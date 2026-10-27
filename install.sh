@@ -32,6 +32,30 @@ set_param() {
   fi
 }
 
+# Dotfiles update/installer function
+DOTS="$HOME/.local/share/hypr-dots"
+sync_dotfiles() {
+  mkdir -p "$HOME/.local/share" "$HOME/.config"
+  if [ -d "$DOTS/.git" ]; then
+    git -C "$DOTS" pull --ff-only || return 1
+  else
+    git clone https://github.com/agustux/hypr-dots.git "$DOTS" || return 1
+  fi
+
+  # Prune symlinks to files removed upstream
+  find "$HOME/.config" -xtype l -lname "$DOTS/*" -delete
+  (cd "$DOTS/.config" && find . -type f -print0) | while IFS= read -r -d '' f; do
+    mkdir -p "$HOME/.config/$(dirname "$f")"
+    ln -sf "$DOTS/.config/$f" "$HOME/.config/$f"
+  done
+
+  # Apply username fix to templates
+  for d in gtk-3.0 gtk-4.0; do
+    sed "s|@USER@|$USER|g" "$HOME/.config/$d/bookmarks.tmpl" > "$HOME/.config/$d/bookmarks"
+  done
+  sed "s|@HOME@|$HOME|g" "$HOME/.config/hypr/hyprqt6engine.conf.tmpl" > "$HOME/.config/hypr/hyprqt6engine.conf"
+}
+
 # Intel undervolt support detection (i3/i5/i7/i9, 4th-10th gen)
 CPU_MODEL=$(grep -m1 "model name" /proc/cpuinfo)
 NUM=$(echo "$CPU_MODEL" | grep -oP 'i[3579]-\K[0-9]{4,5}')
@@ -58,6 +82,7 @@ lspci -d 106b:1801 | grep -q . && IS_T2=1
 NEEDS_BROADCOM_WL=0
 [ "$IS_T2" -eq 0 ] && lspci -d 14e4: | grep -qi network && NEEDS_BROADCOM_WL=1
 
+# Disable undervolting on T2 Macs
 [ "$IS_T2" -eq 1 ] && UNDERVOLT_SUPPORTED=0
 
 # Parse flags (for non-interactive runs)
@@ -66,6 +91,7 @@ BLOAT=0
 GNOME=0
 FOOT=0
 NOSWAP=0
+UPDATE=0
 for arg in "$@"; do
   case "$arg" in
     --noswap) NOSWAP=1 ;;
@@ -73,8 +99,18 @@ for arg in "$@"; do
     --nvidia) FORCE_NVIDIA=1 ;;
     --bloat) BLOAT=1 ;;
     --gnome) GNOME=1 ;;
+    --update) UPDATE=1 ;;
   esac
 done
+
+# Just update dots if --update used
+if [ "$UPDATE" -eq 1 ]; then
+  sync_dotfiles || exit 1
+  echo -e "\n\033[0;32mDotfiles updated, reboot to apply changes\033[0m"
+  exit 0
+fi
+
+# Install GNOME if --bloat used
 [ "$BLOAT" -eq 1 ] && GNOME=1
 
 # NVIDIA presence detection (vendor ID 10de = NVIDIA), with --nvidia override
@@ -383,25 +419,25 @@ mkdir -p $HOME/Videos
 mkdir -p $HOME/Downloads
 mkdir -p $HOME/Pictures/Screenshots
 
-cd $HOME && git clone https://github.com/agustux/hypr-dots.git
-mkdir -p $HOME/.config
-cp -r $HOME/hypr-dots/.config/. $HOME/.config/
+# Installing dotfiles
+sync_dotfiles || exit 1
 
-# Rewriting hardcoded home path in GTK bookmarks
-for d in gtk-3.0 gtk-4.0; do
-  sed "s|@USER@|$USER|g" "$HOME/.config/$d/bookmarks.tmpl" > "$HOME/.config/$d/bookmarks"
-  rm "$HOME/.config/$d/bookmarks.tmpl"
-done
-
-# Swapping terminal to foot (foot has no --gtk-single-instance flag)
-if [ "$FOOT" -eq 1 ]; then
-  sed -i -e 's|^local var_terminal = .*|local var_terminal = "foot"|' \
-         -e 's|^local var_terminal_flags = .*|local var_terminal_flags = ""|' \
-         "$HOME/.config/hypr/hyprland.lua"
+# Untracked per-machine overrides (never overwritten by updates)
+LOCAL_LUA="$HOME/.config/hypr/local.lua"
+if [ ! -f "$LOCAL_LUA" ]; then
+  if [ "$FOOT" -eq 1 ]; then
+    # foot has no --gtk-single-instance flag
+    cat > "$LOCAL_LUA" << 'EOF'
+-- Local overrides (untracked). Keys: terminal, terminal_flags
+return {
+  terminal = "foot",
+  terminal_flags = "",
+}
+EOF
+  else
+    printf -- '-- Local overrides (untracked). Keys: terminal, terminal_flags\nreturn {}\n' > "$LOCAL_LUA"
+  fi
 fi
-
-# Rewriting hardcoded home path for QT
-sed "s|@HOME@|$HOME|g" ~/.config/hypr/hyprqt6engine.conf.tmpl > ~/.config/hypr/hyprqt6engine.conf
 
 # Quieting kernel messages on the console
 set_param loglevel 3
@@ -414,7 +450,7 @@ set_param vt.default_blu "46,168,161,175,250,231,213,244,112,168,161,175,250,231
 
 # Copying GRUB config
 sudo mkdir -p /boot/grub/themes/catppuccin-mocha
-sudo cp -r $HOME/.config/grub/. /boot/grub/themes/catppuccin-mocha/
+sudo cp -rL $HOME/.config/grub/. /boot/grub/themes/catppuccin-mocha/
 [ "$CMDLINE_MODE" = uki ] && sudo chmod -x /etc/grub.d/10_linux
 sudo sed -i 's|^#GRUB_TERMINAL_OUTPUT=.*|GRUB_TERMINAL_OUTPUT=gfxterm|' /etc/default/grub
 sudo sed -i 's|^#\?GRUB_THEME=.*|GRUB_THEME="/boot/grub/themes/catppuccin-mocha/theme.txt"|' /etc/default/grub
