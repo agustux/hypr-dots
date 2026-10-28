@@ -1,0 +1,29 @@
+scaling=fill
+color=11111b
+effect-blur=7x1
+effect-vignette=0.5:0.5
+indicator
+indicator-idle-visible
+indicator-radius=100
+indicator-thickness=6
+clock
+timestr=%-I:%M
+datestr=%A, %B %d
+font=JetBrainsMono Nerd Font
+font-size=48
+ring-color=00000000
+ring-clear-color=00000000
+ring-ver-color=fab387ff
+ring-wrong-color=f38ba8ff
+inside-color=11111b80
+inside-clear-color=11111b80
+inside-ver-color=11111b80
+inside-wrong-color=11111b80
+text-color=cdd6f4bf
+text-clear-color=cdd6f4bf
+text-ver-color=cdd6f4bf
+text-wrong-color=cdd6f4bf
+line-color=00000000
+separator-color=00000000
+key-hl-color=74c7ecff
+bs-hl-color=f38ba8ff

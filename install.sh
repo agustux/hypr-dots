@@ -167,7 +167,7 @@ done
 # Basic Window Manager Packages
 if [ "$SWAY" -eq 1 ]; then
   yay -S --needed --noconfirm sway xdg-desktop-portal-gtk xdg-desktop-portal-wlr \
-      hyprpolkitagent hyprlock hypridle hyprpaper grim slurp grimshot wl-clipboard dunst brightnessctl \
+      hyprpolkitagent swaylock-effects swayidle swaybg grim slurp sway-contrib wl-clipboard dunst brightnessctl \
       jq wl-mirror
 else
   yay -S --needed --noconfirm hyprland xdg-desktop-portal-gtk xdg-desktop-portal-hyprland \

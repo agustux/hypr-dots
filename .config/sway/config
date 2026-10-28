@@ -17,10 +17,10 @@ exec_always ~/.config/sway/sway-outputs.sh
 # Autostart Daemons & Services
 # ==========================================
 exec $terminal $terminal_flags
-exec hyprpaper
+output * bg ~/.config/hypr/wallpapers/daniel-leone-mocha.jpg fill
 exec waybar -c ~/.config/waybar/config.sway
 exec dunst
-exec hypridle
+exec swayidle -w
 
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP PATH
 exec /usr/lib/hyprpolkitagent/hyprpolkitagent
