@@ -22,10 +22,23 @@ Flags:
 - `--foot`    Install foot instead of Ghostty as the terminal
 - `--noswap`  Skip creating the 4GB swapfile, for really storage constrained systems 
 - `--update`  Only update dotfiles (for existing installs)
+- `--sway`    Also install Sway and its packages (Hyprland stays installed)
 
 The installer may modify your system configuration and will install
 packages. Review install.sh before running it if you want to see exactly
 what will be changed.
+
+## Sway
+
+Hyprland and Sway coexist. `--sway` only adds Sway's packages; both configs are always installed.
+Pick the session at the display manager (ly's stock "Sway" entry works).
+
+- Waybar configs are rendered at install: `config.hyprland` and `config.sway`. Each WM starts `waybar -c <file>`.
+- `/usr/local/bin/sway` wraps `/usr/bin/sway`. It sets GPU, VA-API, cursor and Qt env before launch, as `hyprland.lua` does.
+- `sway-outputs.sh` applies the same capped mode (max 1920 wide, native aspect ratio) and mirrors extra displays with `wl-mirror`.
+- Portals: `~/.config/xdg-desktop-portal/sway-portals.conf` (gtk default, wlr for ScreenCast/Screenshot).
+- Existing installs: re-run with `--update`. The old `~/.config/waybar/config` is no longer used and can be deleted.
+- Sway keybinds are in `.config/sway/config`.
 
 ## Keybinds
 

@@ -175,7 +175,7 @@ end
 hl.on("hyprland.start", function()
     hl.exec_cmd(var_terminal .. " " .. var_terminal_flags)
     hl.exec_cmd("hyprpaper")
-    hl.exec_cmd("waybar")
+    hl.exec_cmd("waybar -c ~/.config/waybar/config.hyprland")
     hl.exec_cmd("dunst")
     hl.exec_cmd("hypridle")
 
@@ -333,7 +333,7 @@ hl.bind(var_mainMod .. " + Q", hl.dsp.exec_cmd(var_terminal .. " " .. var_termin
 hl.bind(var_mainMod .. " + E", hl.dsp.exec_cmd(var_fileManager))
 hl.bind(var_mainMod .. " + B", hl.dsp.exec_cmd(var_browser))
 hl.bind(var_mainMod .. " + R", hl.dsp.exec_cmd("rofi -show drun"))
-hl.bind(var_mainMod .. " + W", hl.dsp.exec_cmd("killall waybar || waybar"))
+hl.bind(var_mainMod .. " + W", hl.dsp.exec_cmd("killall waybar || waybar -c ~/.config/waybar/config.hyprland"))
 hl.bind(var_mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("loginctl lock-session"))
 hl.bind(var_mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit"))
 

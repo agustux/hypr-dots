@@ -94,7 +94,8 @@ window#waybar {
 }
 
 /* Active workspace pill */
-#workspaces button.active {
+#workspaces button.active,
+#workspaces button.focused {
     background: #74c7ec;
     color: #181825;      /* dark text for contrast */
 }

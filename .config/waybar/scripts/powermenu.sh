@@ -9,6 +9,6 @@ choice=$(printf "⏻  Shutdown\n  Reboot\n󰍃  Suspend\n󰌾  Lock" | \
 case "$choice" in
     *Shutdown*) systemctl poweroff ;;
     *Reboot*) systemctl reboot ;;
-    *Suspend*) hyprctl dispatch exit ;;
+    *Suspend*) systemctl suspend ;;
     *Lock*) hyprlock ;;
 esac

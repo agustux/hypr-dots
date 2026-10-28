@@ -1,0 +1,32 @@
+#!/bin/sh
+igpu= dgpu=
+for f in /sys/bus/pci/devices/*/class; do
+  read -r c < "$f"
+  case "$c" in
+    0x030000|0x030200)
+      pci=$(basename "$(dirname "$f")")
+      bus=${pci#*:}; bus=${bus%%:*}
+      if [ "$bus" = 00 ] && [ -z "$igpu" ]; then igpu=$pci
+      elif [ "$bus" != 00 ] && [ -z "$dgpu" ]; then dgpu=$pci
+      fi ;;
+  esac
+done
+[ -z "$igpu" ] && { igpu=$dgpu; dgpu=; }
+
+if [ -n "$igpu" ] && [ -n "$dgpu" ] && [ -e "/dev/dri/by-path/pci-$igpu-card" ]; then
+  export WLR_DRM_DEVICES=$(readlink -f "/dev/dri/by-path/pci-$igpu-card")
+fi
+
+case "$(cat "/sys/bus/pci/devices/$igpu/vendor" 2>/dev/null)" in
+  0x1002) export LIBVA_DRIVER_NAME=radeonsi ;;
+  0x10de) export LIBVA_DRIVER_NAME=nvidia ;;
+  *)      export LIBVA_DRIVER_NAME=iHD ;;
+esac
+
+export XDG_CURRENT_DESKTOP=sway XDG_SESSION_DESKTOP=sway XDG_SESSION_TYPE=wayland
+export XCURSOR_SIZE=24 NVD_BACKEND=direct WLR_NO_HARDWARE_CURSORS=1
+export QT_QPA_PLATFORMTHEME=hyprqt6engine QT_QPA_PLATFORM=wayland
+
+flags=
+[ -d /proc/driver/nvidia ] && flags=--unsupported-gpu
+exec /usr/bin/sway $flags "$@"
