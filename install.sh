@@ -50,9 +50,7 @@ sync_dotfiles() {
   done
 
   # Apply username fix to templates
-  for d in gtk-3.0 gtk-4.0; do
-    sed "s|@USER@|$USER|g" "$HOME/.config/$d/bookmarks.tmpl" > "$HOME/.config/$d/bookmarks"
-  done
+  sed "s|@USER@|$USER|g" "$HOME/.config/gtk-3.0/bookmarks.tmpl" > "$HOME/.config/gtk-3.0/bookmarks"
   sed "s|@HOME@|$HOME|g" "$HOME/.config/hypr/hyprqt6engine.conf.tmpl" > "$HOME/.config/hypr/hyprqt6engine.conf"
 
   # Render Waybar configs, one per WM
