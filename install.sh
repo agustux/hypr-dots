@@ -54,6 +54,18 @@ sync_dotfiles() {
     sed "s|@USER@|$USER|g" "$HOME/.config/$d/bookmarks.tmpl" > "$HOME/.config/$d/bookmarks"
   done
   sed "s|@HOME@|$HOME|g" "$HOME/.config/hypr/hyprqt6engine.conf.tmpl" > "$HOME/.config/hypr/hyprqt6engine.conf"
+
+  # Render Waybar configs, one per WM
+  if [ -f "$HOME/.config/waybar/config.tmpl" ]; then
+    for wm in hyprland sway; do
+      sed "s|@WORKSPACES_MODULE@|$wm/workspaces|g" "$HOME/.config/waybar/config.tmpl" > "$HOME/.config/waybar/config.$wm"
+    done
+  fi
+
+  # Sway: shadow /usr/bin/sway so the stock ly entry picks up env + iGPU detection
+  if [ "$SWAY" -eq 1 ]; then
+    sudo install -Dm755 "$HOME/.config/sway/sway-session" /usr/local/bin/sway
+  fi
 }
 
 # Intel undervolt support detection (i3/i5/i7/i9, 4th-10th gen)
@@ -92,6 +104,7 @@ GNOME=0
 FOOT=0
 NOSWAP=0
 UPDATE=0
+SWAY=0
 for arg in "$@"; do
   case "$arg" in
     --noswap) NOSWAP=1 ;;
@@ -100,6 +113,7 @@ for arg in "$@"; do
     --bloat) BLOAT=1 ;;
     --gnome) GNOME=1 ;;
     --update) UPDATE=1 ;;
+    --sway) SWAY=1 ;;
   esac
 done
 
@@ -152,9 +166,15 @@ for pkg in "${BLOAT_PKGS[@]}"; do
 done
 [ "${#TO_REMOVE[@]}" -gt 0 ] && sudo pacman -Rns --noconfirm "${TO_REMOVE[@]}"
 
-# Basic Hyprland Packages
-yay -S --needed --noconfirm hyprland xdg-desktop-portal-gtk xdg-desktop-portal-hyprland \
-    hyprpolkitagent hyprlock hypridle hyprpaper hyprshot hyprshutdown wl-clipboard dunst brightnessctl
+# Basic Window Manager Packages
+if [ "$SWAY" -eq 1 ]; then
+  yay -S --needed --noconfirm sway xdg-desktop-portal-gtk xdg-desktop-portal-wlr \
+      hyprpolkitagent hyprlock hypridle hyprpaper grim slurp grimshot wl-clipboard dunst brightnessctl \
+      jq wl-mirror
+else
+  yay -S --needed --noconfirm hyprland xdg-desktop-portal-gtk xdg-desktop-portal-hyprland \
+      hyprpolkitagent hyprlock hypridle hyprpaper hyprshot hyprshutdown wl-clipboard dunst brightnessctl
+fi
 
 # Terminal
 if [ "$FOOT" -eq 1 ]; then
