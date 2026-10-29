@@ -167,7 +167,7 @@ done
 # Basic Window Manager Packages
 if [ "$SWAY" -eq 1 ]; then
   yay -S --needed --noconfirm sway xdg-desktop-portal-gtk xdg-desktop-portal-wlr \
-      hyprpolkitagent swaylock-effects swayidle swaybg grim slurp sway-contrib wl-clipboard dunst brightnessctl \
+      hyprpolkitagent hyprlock swayidle swaybg grim slurp sway-contrib wl-clipboard dunst brightnessctl \
       jq wl-mirror
 else
   yay -S --needed --noconfirm hyprland xdg-desktop-portal-gtk xdg-desktop-portal-hyprland \
@@ -454,6 +454,16 @@ return {
 EOF
   else
     printf -- '-- Local overrides (untracked). Keys: terminal, terminal_flags\nreturn {}\n' > "$LOCAL_LUA"
+  fi
+fi
+
+# Sway per-machine overrides (untracked)
+LOCAL_SWAY="$HOME/.config/sway/local.conf"
+if [ ! -f "$LOCAL_SWAY" ]; then
+  if [ "$FOOT" -eq 1 ]; then
+    echo 'set $terminal foot' > "$LOCAL_SWAY"
+  else
+    : > "$LOCAL_SWAY"
   fi
 fi
 

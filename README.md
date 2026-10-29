@@ -39,6 +39,8 @@ Pick the session at the display manager (ly's stock "Sway" entry works).
 - Portals: `~/.config/xdg-desktop-portal/sway-portals.conf` (gtk default, wlr for ScreenCast/Screenshot).
 - Existing installs: re-run with `--update`. The old `~/.config/waybar/config` is no longer used and can be deleted.
 - Sway keybinds are in `.config/sway/config`.
+- Wallpaper: sway's `output * bg` (swaybg). Idle and suspend: swayidle (`~/.config/swayidle/config`). Lock screen: hyprlock, shared with Hyprland.
+- Per-machine overrides (e.g. terminal) go in untracked `~/.config/sway/local.conf`, created by the installer.
 
 ## Keybinds
 
@@ -55,6 +57,7 @@ Pick the session at the display manager (ly's stock "Sway" entry works).
 | `Super + W` | Toggle **W**aybar |
 | `Super + Shift + Q` | Lock session |
 | `Super + M` | Exit Hyprland |
+| `Super + Shift + R` | Reload config (Sway only; Hyprland reloads on save) |
 
 ### Screenshots
 
@@ -80,6 +83,7 @@ Pick the session at the display manager (ly's stock "Sway" entry works).
 | `Super + Shift + H/J/K/L` | Swap window left/down/up/right |
 | `Super + LMB drag` | Move |
 | `Super + RMB drag` | Resize |
+| `Super + Ctrl + R` | Resize mode: `H`/`L` shrink/grow width, `K`/`J` shrink/grow height, `Esc`/`Enter` exits |
 
 ### Workspaces
 

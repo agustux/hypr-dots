@@ -2,6 +2,6 @@ timeout 60 'brightnessctl -s set 1; brightnessctl -sd rgb:kbd_backlight set 0' r
 timeout 90 'loginctl lock-session'
 timeout 95 'swaymsg "output * power off"' resume 'swaymsg "output * power on"'
 timeout 180 '~/.config/sway/idle-suspend.sh'
-lock 'pidof swaylock || swaylock -f -i $HOME/.config/hypr/wallpapers/daniel-leone-mocha.jpg'
-before-sleep 'pidof swaylock || swaylock -f -i $HOME/.config/hypr/wallpapers/daniel-leone-mocha.jpg'
+lock 'pidof hyprlock || hyprlock &'
+before-sleep 'pidof hyprlock || hyprlock & sleep 1'
 after-resume 'swaymsg "output * power on"'
