@@ -406,6 +406,17 @@ hl.bind(var_mainMod .. " + mouse:273", hl.dsp.window.resize(), {
     mouse = true,
 })
 
+-- Resize mode: Super + Ctrl + R, then H/J/K/L; Esc/Enter to exit
+hl.bind(var_mainMod .. " + CTRL + R", hl.dsp.submap("resize"))
+hl.define_submap("resize", function()
+    hl.bind("l", hl.dsp.window.resize({ x = 20, y = 0, relative = true }), { repeating = true })
+    hl.bind("h", hl.dsp.window.resize({ x = -20, y = 0, relative = true }), { repeating = true })
+    hl.bind("j", hl.dsp.window.resize({ x = 0, y = 20, relative = true }), { repeating = true })
+    hl.bind("k", hl.dsp.window.resize({ x = 0, y = -20, relative = true }), { repeating = true })
+    hl.bind("escape", hl.dsp.submap("reset"))
+    hl.bind("return", hl.dsp.submap("reset"))
+end)
+
 -- Laptop multimedia keys for volume and LCD brightness
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), {
     repeating = true,
