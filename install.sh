@@ -168,7 +168,7 @@ for pkg in "${BLOAT_PKGS[@]}"; do
 done
 [ "${#TO_REMOVE[@]}" -gt 0 ] && sudo pacman -Rns --noconfirm "${TO_REMOVE[@]}"
 
-# Basic Window Manager Packages
+# Basic WM Packages
 if [ "$SWAY" -eq 1 ]; then
   yay -S --needed --noconfirm sway xdg-desktop-portal-gtk xdg-desktop-portal-wlr \
       hyprpolkitagent hyprlock swayidle swaybg grim slurp sway-contrib wl-clipboard dunst brightnessctl \
@@ -220,8 +220,8 @@ yay -S --needed --noconfirm curl less man-db ufw rsync powertop nvtop zip unzip 
     cpupower fastfetch
 
 # Support Libraries
-yay -S --needed --noconfirm "${KERNEL_HEADERS[@]}" bash-completion tar-scripts exfat-utils libcamera \
-    gst-plugin-libcamera pipewire-libcamera libcamera-tools libcamera-ipa xorg-xhost sof-firmware
+yay -S --needed --noconfirm "${KERNEL_HEADERS[@]}" bash-completion tar-scripts exfatprogs exfat-utils \
+    libcamera gst-plugin-libcamera pipewire-libcamera libcamera-tools libcamera-ipa xorg-xhost sof-firmware
 
 # Neovim Packages
 yay -S --needed --noconfirm neovim ripgrep fd tree-sitter-cli lua-language-server \
@@ -298,11 +298,10 @@ fi
 
 # NVIDIA stuff for hyprland
 if [ "$NVIDIA" -eq 1 ]; then
-
   GPU_NAME=$(lspci -d 10de: | grep -iE 'vga|3d|display')
   NVIDIA_LEGACY=0
   if [ "$BLOAT" -eq 1 ]; then
-      NVIDIA_LEGACY=0   # --bloat: skip detection, always open driver
+      NVIDIA_LEGACY=0   # --bloat: skip detection, always latest open driver
   elif [ -z "$GPU_NAME" ]; then
       NVIDIA_LEGACY=0   # No NVIDIA GPU present (user override): open driver
   elif echo "$GPU_NAME" | grep -qPi 'RTX\s*[2-9][0-9]{3}|GTX\s*16[0-9]{2}|TITAN RTX|Tesla T4|Quadro T[0-9]{3,4}'; then
@@ -314,7 +313,7 @@ if [ "$NVIDIA" -eq 1 ]; then
   fi
 
   if [ "$NVIDIA_LEGACY" -eq 1 ]; then
-      yay -S --needed --noconfirm nvidia-580xx-dkms nvidia-580xx-utils lib32-nvidia-580xx-utils
+      yay -S --needed --noconfirm nvidia-580xx-utils lib32-nvidia-580xx-utils nvidia-580xx-dkms
   else
       yay -S --needed --noconfirm nvidia-utils lib32-nvidia-utils nvidia-open-dkms
   fi
@@ -326,7 +325,6 @@ if [ "$NVIDIA" -eq 1 ]; then
   set_param iommu pt
   set_param nvidia.NVreg_PreserveVideoMemoryAllocations 1
   set_param nvidia_drm.modeset 1
-  [ "$CMDLINE_MODE" = uki ] && sudo mkinitcpio -P
 fi
 # End NVIDIA stuff for hyprland
 
@@ -343,7 +341,6 @@ if [ "$IS_T2" -eq 1 ]; then
     grep -qE "^MODULES=\(.*\b$m\b" /etc/mkinitcpio.conf \
       || sudo sed -i -E "s/^MODULES=\(/MODULES=($m /" /etc/mkinitcpio.conf
   done
-  sudo mkinitcpio -P
 
   # Audio
   T2_AUDIO=$(mktemp -d)
@@ -423,27 +420,29 @@ set_param loglevel 3
 set_param vt.default_red "30,243,166,249,137,245,148,205,88,243,166,249,137,245,148,166"
 set_param vt.default_grn "30,139,227,226,180,194,226,214,91,139,227,226,180,194,226,173"
 set_param vt.default_blu "46,168,161,175,250,231,213,244,112,168,161,175,250,231,213,200"
-[ "$CMDLINE_MODE" = uki ] && sudo mkinitcpio -P
 
 # Installing system configs from dotfiles
 sudo install -Dm644 "$HOME/.config/tlp/00-custom.conf" /etc/tlp.d/00-custom.conf
-sudo systemctl enable tlp.service
 sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
+sudo systemctl enable tlp.service
 
+# Install undervolt config
 if [ "$UNDERVOLT_SUPPORTED" -eq 1 ]; then
   sudo install -Dm644 "$HOME/.config/intel-undervolt/intel-undervolt.conf" /etc/intel-undervolt.conf
   sudo systemctl enable intel-undervolt
 fi
 
+# Install NVIDIA confs
 if [ "$NVIDIA" -eq 1 ]; then
   sudo install -Dm644 "$HOME/.config/nvidia/nvidia-pm.conf" /etc/modprobe.d/nvidia-pm.conf
   sudo install -Dm644 "$HOME/.config/nvidia/80-nvidia-pm.rules" /etc/udev/rules.d/80-nvidia-pm.rules
 fi
 
+# Ly config installation
 sudo ln -sf "$HOME/.config/ly/config.ini" /etc/ly/config.ini
 sudo install -Dm644 "$HOME/.config/ly/ly-override.conf" /etc/systemd/system/ly@tty1.service.d/override.conf
 
-# Copying GRUB config
+# Copying GRUB config/theme
 sudo mkdir -p /boot/grub/themes/catppuccin-mocha
 sudo cp -rL $HOME/.config/grub/. /boot/grub/themes/catppuccin-mocha/
 [ "$CMDLINE_MODE" = uki ] && sudo chmod -x /etc/grub.d/10_linux
@@ -457,12 +456,15 @@ grep -q '^NoExtract.*_efi_bootnext' /etc/pacman.conf || \
 sudo rm -f /etc/grub.d/*_efi_bootnext
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 
-
-# Linking .config's ly config to /etc
-sudo ln -sf "$HOME/.config/ly/config.ini" /etc/ly/config.ini
-
-# Getting the hyprland configs set up
+# Getting the bashrc set up
 echo '[ -f ~/.config/bash/bashrc ] && . ~/.config/bash/bashrc' > ~/.bashrc
+
+# Making the initramfs to apply our configs
+if [ "$CMDLINE_MODE" = "uki" ]; then
+    sudo mkinitcpio -P
+elif [ "$CMDLINE_MODE" = "grub" ]; then
+    sudo grub-mkconfig -o /boot/grub/grub.cfg
+fi
 
 # Purging any orphaned packages
 orphans=$(yay -Qtdq 2>/dev/null)
