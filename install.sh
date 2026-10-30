@@ -1,5 +1,9 @@
 #!/bin/bash
 
+####################################################################################################
+# PREFLIGHT ENVIRONMENT CHECKS
+####################################################################################################
+
 # Stop immediately if UID is root
 if [ "$EUID" -eq 0 ]; then
   echo "Don't run this script as root" >&2
@@ -34,7 +38,7 @@ set_param() {
 
 # Dotfiles update/installer function
 DOTS="$HOME/.local/share/hypr-dots"
-sync_dotfiles() {
+deploy_dotfiles() {
   mkdir -p "$HOME/.local/share" "$HOME/.config"
   if [ -d "$DOTS/.git" ]; then
     git -C "$DOTS" pull --ff-only || return 1
@@ -75,49 +79,51 @@ UNDERVOLT_SUPPORTED=0
 
 # Intel iGPU/CPU presence detection (vendor ID 8086 = Intel)
 IS_INTEL=0
-lspci -d 8086: | grep -qi 'vga\|3d\|display' && IS_INTEL=1
-grep -qi 'GenuineIntel' /proc/cpuinfo && IS_INTEL=1
+for d in /sys/class/drm/card[0-9]*/device; do
+  [[ $(<"$d/vendor") == 0x8086 ]] && IS_INTEL=1 && break
+done
+grep -qm1 GenuineIntel /proc/cpuinfo && IS_INTEL=1
 
 # Chrultrabook detection (Chrome EC survives full UEFI firmware flash)
-modprobe cros_ec_lpcs 2>/dev/null
 IS_CHROMEBOOK=0
 [ -e /dev/cros_ec ] && IS_CHROMEBOOK=1
-[ -d /sys/bus/platform/devices/GOOG*/ ] 2>/dev/null && IS_CHROMEBOOK=1
+compgen -G '/sys/bus/acpi/devices/GOOG*' >/dev/null && IS_CHROMEBOOK=1
 
 # T2 Mac detection (106b:1801 = Apple T2 Bridge Controller)
 IS_T2=0
-lspci -d 106b:1801 | grep -q . && IS_T2=1
+grep -qis 'v0000106Bd00001801' /sys/bus/pci/devices/*/modalias && IS_T2=1
 
 # Broadcom wifi detection (vendor ID 14e4 = Broadcom); skipped on T2 (handled manually)
 NEEDS_BROADCOM_WL=0
-[ "$IS_T2" -eq 0 ] && lspci -d 14e4: | grep -qi network && NEEDS_BROADCOM_WL=1
+[ "$IS_T2" -eq 0 ] && grep -qis 'v000014E4d.*bc02sc80' /sys/bus/pci/devices/*/modalias && NEEDS_BROADCOM_WL=1
 
 # Disable undervolting on T2 Macs
 [ "$IS_T2" -eq 1 ] && UNDERVOLT_SUPPORTED=0
 
 # Parse flags (for non-interactive runs)
-FORCE_NVIDIA=0
 BLOAT=0
-GNOME=0
 FOOT=0
+GNOME=0
 NOSWAP=0
-UPDATE=0
+FORCE_NVIDIA=0
 SWAY=0
+UPDATE=0
+
 for arg in "$@"; do
   case "$arg" in
-    --noswap) NOSWAP=1 ;;
-    --foot) FOOT=1 ;;
-    --nvidia) FORCE_NVIDIA=1 ;;
     --bloat) BLOAT=1 ;;
+    --foot) FOOT=1 ;;
     --gnome) GNOME=1 ;;
-    --update) UPDATE=1 ;;
+    --noswap) NOSWAP=1 ;;
+    --nvidia) FORCE_NVIDIA=1 ;;
     --sway) SWAY=1 ;;
+    --update) UPDATE=1 ;;
   esac
 done
 
 # Just update dots if --update used
 if [ "$UPDATE" -eq 1 ]; then
-  sync_dotfiles || exit 1
+  deploy_dotfiles || exit 1
   echo -e "\n\033[0;32mDotfiles updated, reboot to apply changes\033[0m"
   exit 0
 fi
@@ -125,21 +131,19 @@ fi
 # Install GNOME if --bloat used
 [ "$BLOAT" -eq 1 ] && GNOME=1
 
-# NVIDIA presence detection (vendor ID 10de = NVIDIA), with --nvidia override
-# and an interactive fallback prompt if no GPU is detected and no flag was passed
+# NVIDIA presence detection (vendor ID 10de = NVIDIA) with --nvidia override
 NVIDIA=0
 if [ "$FORCE_NVIDIA" -eq 1 ] || [ "$BLOAT" -eq 1 ]; then
   NVIDIA=1
 else
-  lspci -d 10de: | grep -qi 'vga\|3d\|display' && NVIDIA=1
-  if [ "$NVIDIA" -eq 0 ]; then
-    read -rp "No NVIDIA GPU detected. Install NVIDIA drivers/config anyway? [y/N] " ans
-    [[ "$ans" =~ ^[Yy]$ ]] && NVIDIA=1
-  fi
+  grep -qis 'v000010DEd.*bc03' /sys/bus/pci/devices/*/modalias && NVIDIA=1
 fi
 
 # Kernel header detection (matches every installed kernel via its pkgbase: linux, linux-lts, linux-zen)
-mapfile -t KERNEL_HEADERS < <(cat /usr/lib/modules/*/pkgbase 2>/dev/null | sort -u | sed 's/$/-headers/')
+declare -A seen; KERNEL_HEADERS=()
+for f in /usr/lib/modules/*/pkgbase; do
+  [ -r "$f" ] && read -r p <"$f" && [ -z "${seen[$p]}" ] && seen[$p]=1 && KERNEL_HEADERS+=("$p-headers")
+done
 [ "${#KERNEL_HEADERS[@]}" -eq 0 ] && KERNEL_HEADERS=(linux-headers)
 
 ####################################################################################################
@@ -273,47 +277,6 @@ if [ "$NOSWAP" -eq 0 ] && [ ! -f /swapfile ]; then
   echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab > /dev/null
 fi
 
-# Configuring TLP:
-sudo systemctl enable tlp.service
-sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
-sudo mkdir -p /etc/tlp.d
-sudo tee /etc/tlp.d/00-custom.conf > /dev/null <<EOF
-# CPU
-CPU_SCALING_GOVERNOR_ON_BAT=powersave
-CPU_BOOST_ON_BAT=0
-NMI_WATCHDOG=0
-
-# PCIe / Runtime PM
-PCIE_ASPM_ON_BAT=powersave
-RUNTIME_PM_ON_BAT=auto
-
-# USB
-USB_AUTOSUSPEND=1
-
-# WiFi
-WIFI_PWR_ON_BAT=on
-USB_EXCLUDE_BTUSB=1
-EOF
-
-if [ "$UNDERVOLT_SUPPORTED" -eq 1 ]; then
-  sudo systemctl enable intel-undervolt
-  sudo tee /etc/intel-undervolt.conf > /dev/null <<EOF
-enable yes
-
-undervolt 0 'CPU' -150
-undervolt 1 'GPU' -80
-undervolt 2 'CPU Cache' -120
-undervolt 3 'System Agent' -100
-undervolt 4 'Analog I/O' -100
-
-interval 5000
-
-daemon undervolt:once
-daemon power
-daemon tjoffset
-EOF
-fi
-
 # UFW rules and fix for localsend
 if [ "$BLOAT" -eq 1 ]; then
   sudo ufw allow 53317/tcp
@@ -364,20 +327,6 @@ if [ "$NVIDIA" -eq 1 ]; then
   set_param nvidia.NVreg_PreserveVideoMemoryAllocations 1
   set_param nvidia_drm.modeset 1
   [ "$CMDLINE_MODE" = uki ] && sudo mkinitcpio -P
-
-  sudo tee /etc/modprobe.d/nvidia-pm.conf > /dev/null << 'EOF'
-options nvidia NVreg_DynamicPowerManagement=0x02
-options nvidia NVreg_EnableGpuFirmware=0
-EOF
-  sudo tee /etc/udev/rules.d/80-nvidia-pm.rules > /dev/null << 'EOF'
-ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c0330", ATTR{remove}="1"
-ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c8000", ATTR{remove}="1"
-ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="auto"
-ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="auto"
-ACTION=="bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x040300", TEST=="power/control", ATTR{power/control}="auto"
-ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", TEST=="power/control", ATTR{power/control}="on"
-ACTION=="unbind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030200", TEST=="power/control", ATTR{power/control}="on"
-EOF
 fi
 # End NVIDIA stuff for hyprland
 
@@ -438,7 +387,7 @@ mkdir -p $HOME/Downloads
 mkdir -p $HOME/Pictures/Screenshots
 
 # Installing dotfiles
-sync_dotfiles || exit 1
+deploy_dotfiles || exit 1
 
 # Untracked per-machine overrides (never overwritten by updates)
 LOCAL_LUA="$HOME/.config/hypr/local.lua"
@@ -476,6 +425,24 @@ set_param vt.default_grn "30,139,227,226,180,194,226,214,91,139,227,226,180,194,
 set_param vt.default_blu "46,168,161,175,250,231,213,244,112,168,161,175,250,231,213,200"
 [ "$CMDLINE_MODE" = uki ] && sudo mkinitcpio -P
 
+# Installing system configs from dotfiles
+sudo install -Dm644 "$HOME/.config/tlp/00-custom.conf" /etc/tlp.d/00-custom.conf
+sudo systemctl enable tlp.service
+sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
+
+if [ "$UNDERVOLT_SUPPORTED" -eq 1 ]; then
+  sudo install -Dm644 "$HOME/.config/intel-undervolt/intel-undervolt.conf" /etc/intel-undervolt.conf
+  sudo systemctl enable intel-undervolt
+fi
+
+if [ "$NVIDIA" -eq 1 ]; then
+  sudo install -Dm644 "$HOME/.config/nvidia/nvidia-pm.conf" /etc/modprobe.d/nvidia-pm.conf
+  sudo install -Dm644 "$HOME/.config/nvidia/80-nvidia-pm.rules" /etc/udev/rules.d/80-nvidia-pm.rules
+fi
+
+sudo ln -sf "$HOME/.config/ly/config.ini" /etc/ly/config.ini
+sudo install -Dm644 "$HOME/.config/ly/ly-override.conf" /etc/systemd/system/ly@tty1.service.d/override.conf
+
 # Copying GRUB config
 sudo mkdir -p /boot/grub/themes/catppuccin-mocha
 sudo cp -rL $HOME/.config/grub/. /boot/grub/themes/catppuccin-mocha/
@@ -493,11 +460,6 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 # Linking .config's ly config to /etc
 sudo ln -sf "$HOME/.config/ly/config.ini" /etc/ly/config.ini
-sudo mkdir -p /etc/systemd/system/ly@tty1.service.d
-sudo tee /etc/systemd/system/ly@tty1.service.d/override.conf > /dev/null << 'EOF'
-[Service]
-ExecStartPre=/usr/bin/printf '%%b' '\e]P01e1e2e\e]P7cdd6f4\ec'
-EOF
 
 # Getting the hyprland configs set up
 echo '[ -f ~/.config/bash/bashrc ] && . ~/.config/bash/bashrc' > ~/.bashrc
