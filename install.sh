@@ -193,7 +193,7 @@ yay -S --needed --noconfirm hyprqt6engine
 yay -S --needed --noconfirm pipewire pipewire-pulse wireplumber
 
 # Session / Auth
-yay -S --needed --noconfirm gnome-keyring ly
+yay -S --needed --noconfirm gnome-keyring ly seatd
 
 # Theming / Qt
 yay -S --needed --noconfirm qt6ct qt6-wayland adw-gtk-theme
@@ -285,6 +285,10 @@ if [ "$BLOAT" -eq 1 ]; then
 fi
 sudo systemctl enable --now ufw.service
 sudo ufw --force enable
+
+# Seat access (seatd, same as archinstall)
+sudo systemctl enable seatd.service
+sudo usermod -aG seat "$USER"
 
 # Chrultrabook Fixes (if chromebook)
 if [ "$IS_CHROMEBOOK" -eq 1 ]; then
