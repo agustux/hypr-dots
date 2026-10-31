@@ -338,14 +338,15 @@ hl.bind(var_mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("loginctl lock-session"))
 hl.bind(var_mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit"))
 
 -- Hyprshot w/ PrtSc key
-hl.bind("PRINT", hl.dsp.exec_cmd("hyprshot -m region -o $HOME/Pictures/Screenshots/"))
-hl.bind("ALT + PRINT", hl.dsp.exec_cmd("hyprshot -m window -o $HOME/Pictures/Screenshots/"))
-hl.bind(var_mainMod .. " + PRINT", hl.dsp.exec_cmd("hyprshot -m output -m " .. detect_primary_output() .. " -o $HOME/Pictures/Screenshots/"))
+local shot = "$HOME/.config/hypr/scripts/screenshot.sh"
+hl.bind("PRINT", hl.dsp.exec_cmd(shot .. " region"))
+hl.bind("ALT + PRINT", hl.dsp.exec_cmd(shot .. " window"))
+hl.bind(var_mainMod .. " + PRINT", hl.dsp.exec_cmd(shot .. " output " .. detect_primary_output()))
 
 -- Screenshots for keyboards without PrtSc
-hl.bind(var_mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("hyprshot -m region -o $HOME/Pictures/Screenshots/"))
-hl.bind(var_mainMod .. " + ALT + P", hl.dsp.exec_cmd("hyprshot -m window -o $HOME/Pictures/Screenshots/"))
-hl.bind(var_mainMod .. " + CTRL + P", hl.dsp.exec_cmd("hyprshot -m output -m " .. detect_primary_output() .. " -o $HOME/Pictures/Screenshots/"))
+hl.bind(var_mainMod .. " + SHIFT + P", hl.dsp.exec_cmd(shot .. " region"))
+hl.bind(var_mainMod .. " + ALT + P", hl.dsp.exec_cmd(shot .. " window"))
+hl.bind(var_mainMod .. " + CTRL + P", hl.dsp.exec_cmd(shot .. " output " .. detect_primary_output()))
 
 hl.bind(var_mainMod .. " + C", hl.dsp.window.close())
 hl.bind(var_mainMod .. " + P", hl.dsp.window.pseudo())

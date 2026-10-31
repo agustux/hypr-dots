@@ -175,7 +175,8 @@ if [ "$SWAY" -eq 1 ]; then
       jq wl-mirror
 else
   yay -S --needed --noconfirm hyprland xdg-desktop-portal-gtk xdg-desktop-portal-hyprland \
-      hyprpolkitagent hyprlock hypridle hyprpaper hyprshot hyprshutdown wl-clipboard dunst brightnessctl
+      hyprpolkitagent hyprlock hypridle hyprpaper grim slurp hyprshutdown wl-clipboard dunst brightnessctl \
+      jq libnotify
 fi
 
 # Terminal

@@ -13,7 +13,7 @@ include ~/.config/sway/local.conf
 # Output & Display Configuration (Auto iGPU/Resolution)
 # ==========================================
 
-exec_always ~/.config/sway/sway-outputs.sh
+exec_always ~/.config/sway/scripts/sway-outputs.sh
 
 # ==========================================
 # Autostart Daemons & Services
@@ -88,13 +88,14 @@ mode "resize" {
 bindsym $mod+Ctrl+R mode "resize"
 bindsym $mod+M exit
 
-# Screenshots (using grimshot drop-in replacements)
-bindsym PRINT exec grimshot save area $HOME/Pictures/Screenshots/$(date +'%Y%m%d_%H%M%S.png')
-bindsym Alt+PRINT exec grimshot save active $HOME/Pictures/Screenshots/$(date +'%Y%m%d_%H%M%S.png')
-bindsym $mod+PRINT exec grimshot save output $HOME/Pictures/Screenshots/$(date +'%Y%m%d_%H%M%S.png')
-bindsym $mod+Shift+P exec grimshot save area $HOME/Pictures/Screenshots/$(date +'%Y%m%d_%H%M%S.png')
-bindsym $mod+Alt+P exec grimshot save active $HOME/Pictures/Screenshots/$(date +'%Y%m%d_%H%M%S.png')
-bindsym $mod+Ctrl+P exec grimshot save output $HOME/Pictures/Screenshots/$(date +'%Y%m%d_%H%M%S.png')
+# Screenshots
+set $shot ~/.config/hypr/scripts/screenshot.sh
+bindsym PRINT exec $shot region
+bindsym Alt+PRINT exec $shot window
+bindsym $mod+PRINT exec $shot output
+bindsym $mod+Shift+P exec $shot region
+bindsym $mod+Alt+P exec $shot window
+bindsym $mod+Ctrl+P exec $shot output
 
 # Window management
 bindsym $mod+C kill
