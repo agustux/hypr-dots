@@ -79,8 +79,8 @@ UNDERVOLT_SUPPORTED=0
 
 # Intel iGPU/CPU presence detection (vendor ID 8086 = Intel)
 IS_INTEL=0
-for d in /sys/class/drm/card[0-9]*/device; do
-  [[ $(<"$d/vendor") == 0x8086 ]] && IS_INTEL=1 && break
+for d in /sys/class/drm/card[0-9]/device; do
+  [[ -r "$d/vendor" && $(<"$d/vendor") == 0x8086 ]] && IS_INTEL=1 && break
 done
 grep -qm1 GenuineIntel /proc/cpuinfo && IS_INTEL=1
 
@@ -193,7 +193,7 @@ yay -S --needed --noconfirm hyprqt6engine
 yay -S --needed --noconfirm pipewire pipewire-pulse wireplumber
 
 # Session / Auth
-yay -S --needed --noconfirm gnome-keyring
+yay -S --needed --noconfirm gnome-keyring ly
 
 # Theming / Qt
 yay -S --needed --noconfirm qt6ct qt6-wayland adw-gtk-theme
@@ -221,8 +221,8 @@ yay -S --needed --noconfirm curl less man-db ufw rsync powertop nvtop zip unzip 
     cpupower fastfetch
 
 # Support Libraries
-yay -S --needed --noconfirm "${KERNEL_HEADERS[@]}" bash-completion tar-scripts exfatprogs exfat-utils \
-    libcamera gst-plugin-libcamera pipewire-libcamera libcamera-tools libcamera-ipa xorg-xhost sof-firmware
+yay -S --needed --noconfirm "${KERNEL_HEADERS[@]}" bash-completion tar-scripts exfatprogs libcamera \
+    gst-plugin-libcamera pipewire-libcamera libcamera-tools libcamera-ipa xorg-xhost sof-firmware
 
 # Neovim Packages
 yay -S --needed --noconfirm neovim ripgrep fd tree-sitter-cli lua-language-server \
@@ -371,6 +371,7 @@ if [ "$GNOME" -eq 1 ]; then
     gsettings set org.gnome.desktop.interface accent-color "blue"
   '
 fi
+[ "$GNOME" -eq 0 ] && sudo systemctl enable ly@tty1.service
 
 ####################################################################################################
 # DOTFILES & FINALIZE
@@ -440,6 +441,7 @@ if [ "$NVIDIA" -eq 1 ]; then
 fi
 
 # Ly config installation
+sudo install -d /etc/ly
 sudo ln -sf "$HOME/.config/ly/config.ini" /etc/ly/config.ini
 sudo install -Dm644 "$HOME/.config/ly/ly-override.conf" /etc/systemd/system/ly@tty1.service.d/override.conf
 
