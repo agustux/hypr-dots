@@ -107,6 +107,7 @@ GNOME=0
 NOSWAP=0
 FORCE_NVIDIA=0
 SWAY=0
+HYPR=1
 UPDATE=0
 
 for arg in "$@"; do
@@ -116,7 +117,7 @@ for arg in "$@"; do
     --gnome) GNOME=1 ;;
     --noswap) NOSWAP=1 ;;
     --nvidia) FORCE_NVIDIA=1 ;;
-    --sway) SWAY=1 ;;
+    --sway) SWAY=1; HYPR=0 ;;
     --update) UPDATE=1 ;;
   esac
 done
@@ -128,8 +129,8 @@ if [ "$UPDATE" -eq 1 ]; then
   exit 0
 fi
 
-# Install GNOME if --bloat used
-[ "$BLOAT" -eq 1 ] && GNOME=1
+# Install GNOME, Sway and Hyprland if --bloat used
+[ "$BLOAT" -eq 1 ] && { GNOME=1; SWAY=1; HYPR=1; }
 
 # NVIDIA presence detection (vendor ID 10de = NVIDIA) with --nvidia override
 NVIDIA=0
@@ -173,7 +174,8 @@ if [ "$SWAY" -eq 1 ]; then
   yay -S --needed --noconfirm sway xdg-desktop-portal-gtk xdg-desktop-portal-wlr \
       hyprpolkitagent hyprlock swayidle swaybg grim slurp sway-contrib wl-clipboard dunst brightnessctl \
       jq wl-mirror
-else
+fi
+if [ "$HYPR" -eq 1 ]; then
   yay -S --needed --noconfirm hyprland xdg-desktop-portal-gtk xdg-desktop-portal-hyprland \
       hyprpolkitagent hyprlock hypridle hyprpaper grim slurp hyprshutdown wl-clipboard dunst brightnessctl \
       jq libnotify
