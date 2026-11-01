@@ -119,6 +119,7 @@ for arg in "$@"; do
     --nvidia) FORCE_NVIDIA=1 ;;
     --sway) SWAY=1; HYPR=0 ;;
     --update) UPDATE=1 ;;
+    *) echo -e "\033[0;31mUnknown flag: $arg\nValid: --bloat --foot --gnome --noswap --nvidia --sway --update\033[0m" >&2; exit 1 ;;
   esac
 done
 
