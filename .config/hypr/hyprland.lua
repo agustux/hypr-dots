@@ -337,7 +337,7 @@ hl.bind(var_mainMod .. " + W", hl.dsp.exec_cmd("killall waybar || waybar -c ~/.c
 hl.bind(var_mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("loginctl lock-session"))
 hl.bind(var_mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit"))
 
--- Hyprshot w/ PrtSc key
+-- Screenshots w/ PrtSc key
 local shot = "$HOME/.config/hypr/scripts/screenshot.sh"
 hl.bind("PRINT", hl.dsp.exec_cmd(shot .. " region"))
 hl.bind("ALT + PRINT", hl.dsp.exec_cmd(shot .. " window"))
