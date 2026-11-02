@@ -41,14 +41,17 @@ DOTS="$HOME/.local/share/hypr-dots"
 deploy_dotfiles() {
   mkdir -p "$HOME/.local/share" "$HOME/.config"
   if [ -d "$DOTS/.git" ]; then
-    git -C "$DOTS" pull --ff-only || return 1
+    git -C "$DOTS" pull --ff-only --recurse-submodules || return 1
+    git -C "$DOTS" submodule update --init --recursive || return 1
   else
-    git clone https://github.com/agustux/hypr-dots.git "$DOTS" || return 1
+    git clone --recurse-submodules https://github.com/agustux/hypr-dots.git "$DOTS" || return 1
   fi
+  git -C "$DOTS" submodule update --init --remote || return 1
 
   # Prune symlinks to files removed upstream
   find "$HOME/.config" -xtype l -lname "$DOTS/*" -delete
-  (cd "$DOTS/.config" && find . -type f -print0) | while IFS= read -r -d '' f; do
+  (cd "$DOTS/.config" && find . -type f -not -path '*/.git' -not -path '*/.git/*' -print0) \
+    | while IFS= read -r -d '' f; do
     mkdir -p "$HOME/.config/$(dirname "$f")"
     ln -sf "$DOTS/.config/$f" "$HOME/.config/$f"
   done
