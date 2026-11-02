@@ -36,6 +36,24 @@ set_param() {
   fi
 }
 
+# Bare kernel flag
+set_flag() {
+  local flag="$1"
+  if [ "$CMDLINE_MODE" = uki ]; then
+    grep -qP "(^|\s)${flag}(\s|$)" "$CMDLINE" \
+      || sudo sed -i -E "s/\s*$/ ${flag}/" "$CMDLINE"
+  else
+    grep -qP "GRUB_CMDLINE_LINUX_DEFAULT=\"([^\"]*\s)?${flag}(\s|\")" "$CMDLINE" \
+      || sudo sed -i -E "s/(GRUB_CMDLINE_LINUX_DEFAULT=\"[^\"]*)\"/\1 ${flag}\"/" "$CMDLINE"
+  fi
+}
+
+# Append module to mkinitcpio MODULES if absent
+add_module() {
+  grep -qE "^MODULES=\(([^)]*[[:space:]])?$1([[:space:]][^)]*)?\)" /etc/mkinitcpio.conf \
+    || sudo sed -i -E "s/^MODULES=\(([^)]*)\)/MODULES=(\1 $1)/" /etc/mkinitcpio.conf
+}
+
 # Dotfiles update/installer function
 DOTS="$HOME/.local/share/hypr-dots"
 deploy_dotfiles() {
@@ -443,6 +461,10 @@ fi
 # Quieting kernel messages on the console
 set_param loglevel 3
 
+# Quiet boot + Plymouth splash
+set_flag quiet
+set_flag splash
+
 # Setting VT color scheme
 set_param vt.default_red "30,243,166,249,137,245,148,205,88,243,166,249,137,245,148,166"
 set_param vt.default_grn "30,139,227,226,180,194,226,214,91,139,227,226,180,194,226,173"
@@ -463,6 +485,25 @@ fi
 if [ "$NVIDIA" -eq 1 ]; then
   sudo install -Dm644 "$HOME/.config/nvidia/nvidia-pm.conf" /etc/modprobe.d/nvidia-pm.conf
   sudo install -Dm644 "$HOME/.config/nvidia/80-nvidia-pm.rules" /etc/udev/rules.d/80-nvidia-pm.rules
+fi
+
+# Plymouth
+PLYMOUTH_THEME=arch-mac-style-catppuccin-mocha
+sudo unzip -oq "$HOME/.config/plymouth/$PLYMOUTH_THEME.zip" -d /usr/share/plymouth/themes
+sudo plymouth-set-default-theme "$PLYMOUTH_THEME"   # initramfs rebuilt at end of script
+
+# Hook right after udev (or systemd)
+sudo sed -i -E '/^HOOKS=/{/\bplymouth\b/!s/\b(udev|systemd)\b/& plymouth/}' /etc/mkinitcpio.conf
+
+# Early KMS modules (all GPU vendors under --bloat)
+if [ "$IS_AMD" -eq 1 ] || [ "$BLOAT" -eq 1 ]; then
+  add_module amdgpu
+fi
+if [ "$IS_INTEL" -eq 1 ] || [ "$BLOAT" -eq 1 ]; then
+  add_module i915
+fi
+if [ "$NVIDIA" -eq 1 ]; then
+  for m in nvidia nvidia_modeset nvidia_uvm nvidia_drm; do add_module "$m"; done
 fi
 
 # Ly config installation
@@ -488,11 +529,8 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg
 echo '[ -f ~/.config/bash/bashrc ] && . ~/.config/bash/bashrc' > ~/.bashrc
 
 # Making the initramfs to apply our configs
-if [ "$CMDLINE_MODE" = "uki" ]; then
-    sudo mkinitcpio -P
-elif [ "$CMDLINE_MODE" = "grub" ]; then
-    sudo grub-mkconfig -o /boot/grub/grub.cfg
-fi
+sudo mkinitcpio -P
+sudo grub-mkconfig -o /boot/grub/grub.cfg
 
 # Purging any orphaned packages
 orphans=$(yay -Qtdq 2>/dev/null)
