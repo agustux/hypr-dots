@@ -195,8 +195,15 @@ fi
 # Basic Hyprland Packages (AUR)
 yay -S --needed --noconfirm hyprqt6engine
 
-# Audio
-yay -S --needed --noconfirm pipewire pipewire-pulse wireplumber
+# Audio (same package set as archinstall)
+yay -S --needed --noconfirm pipewire pipewire-alsa pipewire-jack pipewire-pulse \
+    gst-plugin-pipewire libpulse wireplumber
+
+# Bluetooth (same as archinstall)
+yay -S --needed --noconfirm bluez bluez-utils
+
+# Audio firmware: unconditional so the install boots on any hardware
+yay -S --needed --noconfirm sof-firmware alsa-firmware
 
 # Session / Auth
 yay -S --needed --noconfirm gnome-keyring ly seatd
@@ -228,7 +235,7 @@ yay -S --needed --noconfirm curl less man-db ufw rsync powertop nvtop zip unzip 
 
 # Support Libraries
 yay -S --needed --noconfirm "${KERNEL_HEADERS[@]}" bash-completion tar-scripts exfatprogs libcamera \
-    gst-plugin-libcamera pipewire-libcamera libcamera-tools libcamera-ipa xorg-xhost sof-firmware
+    gst-plugin-libcamera pipewire-libcamera libcamera-tools libcamera-ipa xorg-xhost
 
 # Neovim Packages
 yay -S --needed --noconfirm neovim ripgrep fd tree-sitter-cli lua-language-server \
@@ -291,6 +298,14 @@ if [ "$BLOAT" -eq 1 ]; then
 fi
 sudo systemctl enable --now ufw.service
 sudo ufw --force enable
+
+# Bluetooth service (same as archinstall)
+sudo systemctl enable bluetooth.service
+
+# PipeWire user units (same symlinks as archinstall)
+mkdir -p "$HOME/.config/systemd/user/default.target.wants"
+ln -sf /usr/lib/systemd/user/pipewire-pulse.service "$HOME/.config/systemd/user/default.target.wants/pipewire-pulse.service"
+ln -sf /usr/lib/systemd/user/pipewire-pulse.socket "$HOME/.config/systemd/user/default.target.wants/pipewire-pulse.socket"
 
 # Seat access (seatd, same as archinstall)
 sudo systemctl enable seatd.service
