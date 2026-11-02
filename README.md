@@ -1,4 +1,4 @@
-# My Hyprland Dotfiles
+# No Bloat Dotfiles
 My minimalistic and lightweight Hyprland config for Arch with NVIDIA support(incl. 580 devices if needed), in Catppuccin Mocha.
 Config is in hyprland.lua, includes runtime hardware detection (display outputs, GPU driver, undervolt support)
 instead of hardcoded values, so the same dotfiles port across different machines.
