@@ -59,20 +59,20 @@ mkinitcpio_append_modules() {
   done
 }
 
-# Echo 1 if the NVIDIA GPU needs the legacy 580xx driver, else 0
+# Echo 1 if the NVIDIA GPU needs the legacy 580xx driver, else 0 (PCI device ID >= 0x1e00 = Turing+)
 nvidia_is_legacy() {
-  local gpu
-  gpu=$(lspci -d 10de: | grep -iE 'vga|3d|display')
-  if [ "$BLOAT" -eq 1 ] || [ -z "$gpu" ]; then   # --bloat / no GPU present: latest open driver
-    echo 0
-  elif grep -qPi 'RTX\s*[2-9][0-9]{3}|GTX\s*16[0-9]{2}|TITAN RTX|Tesla T4|Quadro T[0-9]{3,4}' <<< "$gpu"; then
-    echo 0   # Turing+
-  elif grep -qPi 'GTX\s*(9[0-9]{2}|10[0-9]{2})|GTX\s*750\s*Ti|Quadro [MP][0-9]{3,4}|TITAN\s*(X|Xp|V)\b|Tesla [MPV][0-9]+|GP100' <<< "$gpu"; then
-    echo 1   # Maxwell/Pascal/Volta
-  else
-    echo "Warning: unrecognized GPU '$gpu' — assuming Turing+ (open driver)" >&2
-    echo 0
-  fi
+  local d id modern=0 legacy=0
+  [ "$BLOAT" -eq 1 ] && { echo 0; return; }
+  for d in /sys/bus/pci/devices/*; do
+    [ -r "$d/vendor" ] || continue
+    [ "$(<"$d/vendor")" = 0x10de ] && [[ $(<"$d/class") == 0x03* ]] || continue
+    id=$(<"$d/device")
+    if (( id >= 0x1e00 )); then modern=1
+    elif (( id >= 0x1340 )); then legacy=1
+    else echo "Warning: unsupported pre-Maxwell GPU $id" >&2; modern=1
+    fi
+  done
+  if [ "$modern" -eq 0 ] && [ "$legacy" -eq 1 ]; then echo 1; else echo 0; fi
 }
 
 # Shallow-clone <url> into a temp dir, run <cmd...> in it, always clean up (stdin passes through)
