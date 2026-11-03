@@ -258,8 +258,12 @@ done
 
 # Package sets
 PKGS_WM_COMMON=(xdg-desktop-portal-gtk hyprpolkitagent hyprlock grim slurp wl-clipboard dunst brightnessctl jq)
+
 PKGS_SWAY=(sway xdg-desktop-portal-wlr swayidle swaybg sway-contrib wl-mirror)
 PKGS_HYPR=(hyprland xdg-desktop-portal-hyprland hypridle hyprpaper hyprshutdown libnotify)
+PKGS_GNOME=(gdm gnome-shell gnome-control-center gnome-session gnome-backgrounds xdg-desktop-portal-gnome dconf)
+PKGS_NVIM=(neovim ripgrep fd tree-sitter-cli lua-language-server bash-language-server pyright clang markdown-oxide)
+
 PKGS_AUDIO=(pipewire pipewire-alsa pipewire-jack pipewire-pulse gst-plugin-pipewire libpulse wireplumber sof-firmware alsa-firmware)
 PKGS_SESSION=(gnome-keyring ly seatd bluez bluez-utils)
 PKGS_THEME=(hyprqt6engine qt6ct qt6-wayland adw-gtk-theme ttf-dejavu ttf-jetbrains-mono-nerd
@@ -267,9 +271,8 @@ PKGS_THEME=(hyprqt6engine qt6ct qt6-wayland adw-gtk-theme ttf-dejavu ttf-jetbrai
 PKGS_GUI=(networkmanager-dmenu tlp pavucontrol nm-connection-editor blueman baobab gnome-disk-utility
   nautilus loupe decibels snapshot vlc vlc-plugins-all gnome-calculator gnome-clocks papers brave-origin-bin)
 PKGS_CLI=(curl less man-db ufw rsync powertop nvtop zip unzip cpupower fastfetch bash-completion tar-scripts
-  exfatprogs libcamera gst-plugin-libcamera pipewire-libcamera libcamera-tools libcamera-ipa xorg-xhost)
-PKGS_NVIM=(neovim ripgrep fd tree-sitter-cli lua-language-server bash-language-server pyright clang markdown-oxide)
-PKGS_GNOME=(gdm gnome-shell gnome-control-center gnome-session gnome-backgrounds xdg-desktop-portal-gnome dconf)
+  exfatprogs libcamera gst-plugin-libcamera pipewire-libcamera libcamera-tools libcamera-ipa xorg-xhost alsa-utils)
+
 PKGS_INTEL=(intel-gpu-tools vulkan-intel lib32-vulkan-intel intel-media-driver libva-intel-driver)
 PKGS_AMD=(vulkan-radeon lib32-vulkan-radeon)
 PKGS_UCODE_INTEL=(intel-ucode)
@@ -279,7 +282,7 @@ PKGS_T2=(t2fanrd)
 PKGS_BROADCOM=(broadcom-wl-dkms)
 PKGS_NVIDIA=(nvidia-utils lib32-nvidia-utils nvidia-open-dkms)
 PKGS_NVIDIA_LEGACY=(nvidia-580xx-utils lib32-nvidia-580xx-utils nvidia-580xx-dkms)
-PKGS_CHROMEBOOK=(alsa-utils)
+
 PKGS_BLOAT=(proton-vpn-gtk-app obs-studio windscribe-v2-bin localsend-bin ventoy-bin yt-dlp
   android-udev android-tools gvfs-mtp libmtp scrcpy gnirehtet-bin opencode
   mesa lib32-mesa vulkan-icd-loader lib32-vulkan-icd-loader libdrm lib32-libdrm lib32-glibc
@@ -287,15 +290,23 @@ PKGS_BLOAT=(proton-vpn-gtk-app obs-studio windscribe-v2-bin localsend-bin ventoy
   lib32-libpipewire lib32-alsa-lib lib32-alsa-plugins)
 
 # Assemble install list
-PKGS=("${KERNEL_HEADERS[@]}" "${PKGS_WM_COMMON[@]}" "${PKGS_AUDIO[@]}" "${PKGS_SESSION[@]}"
-  "${PKGS_THEME[@]}" "${PKGS_GUI[@]}" "${PKGS_CLI[@]}" "${PKGS_NVIM[@]}")
+# Assemble install list
+PKGS=(
+    "${KERNEL_HEADERS[@]}"
+    "${PKGS_WM_COMMON[@]}"
+    "${PKGS_NVIM[@]}"
+    "${PKGS_AUDIO[@]}"
+    "${PKGS_SESSION[@]}"
+    "${PKGS_THEME[@]}"
+    "${PKGS_GUI[@]}"
+    "${PKGS_CLI[@]}"
+)
 
 [ "$SWAY" -eq 1 ] && PKGS+=("${PKGS_SWAY[@]}")
 [ "$HYPR" -eq 1 ] && PKGS+=("${PKGS_HYPR[@]}")
 [ "$FOOT" -eq 1 ] && PKGS+=(foot) || PKGS+=(ghostty)
 [ "$GNOME" -eq 1 ] && PKGS+=("${PKGS_GNOME[@]}")
 [ "$NEEDS_BROADCOM_WL" -eq 1 ] && PKGS+=("${PKGS_BROADCOM[@]}")
-[ "$IS_CHROMEBOOK" -eq 1 ] && PKGS+=("${PKGS_CHROMEBOOK[@]}")
 [ "$IS_T2" -eq 1 ] && PKGS+=("${PKGS_T2[@]}")
 
 if [ "$IS_INTEL" -eq 1 ] || [ "$BLOAT" -eq 1 ]; then
