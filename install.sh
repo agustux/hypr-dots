@@ -92,7 +92,7 @@ ensure_yay() {
   sudo pacman -S --needed --noconfirm git base-devel || return 1
   dir=$(mktemp -d) || return 1
   git clone --depth 1 https://aur.archlinux.org/yay-bin.git "$dir" \
-    && (cd "$dir" && makepkg -si --needed --noconfirm) \
+    && (cd "$dir" && makepkg -s --noconfirm && sudo pacman -U --noconfirm --needed ./*.pkg.tar.zst) \
     && rm -rf "$dir" \
     && return 0
   echo "yay bootstrap failed; build dir kept at $dir" >&2
@@ -265,7 +265,7 @@ PKGS_GNOME=(gdm gnome-shell gnome-control-center gnome-session gnome-backgrounds
 PKGS_NVIM=(neovim ripgrep fd tree-sitter-cli lua-language-server bash-language-server pyright clang markdown-oxide)
 
 PKGS_AUDIO=(pipewire pipewire-alsa pipewire-jack pipewire-pulse gst-plugin-pipewire libpulse wireplumber sof-firmware alsa-firmware)
-PKGS_SESSION=(gnome-keyring ly seatd bluez bluez-utils)
+PKGS_SESSION=(gnome-keyring ly seatd bluez bluez-utils plymouth)
 PKGS_THEME=(hyprqt6engine qt6ct qt6-wayland adw-gtk-theme ttf-dejavu ttf-jetbrains-mono-nerd
   ttf-nerd-fonts-symbols-mono ttf-nerd-fonts-symbols noto-fonts-emoji waybar rofi rofi-bluetooth-git)
 PKGS_GUI=(networkmanager-dmenu tlp pavucontrol nm-connection-editor blueman baobab gnome-disk-utility
@@ -411,7 +411,7 @@ if [ "$GNOME" -eq 1 ]; then
   sudo systemctl disable ly@tty1.service 2>/dev/null
   sudo systemctl enable gdm.service
 
-  dbus-run-session -- bash -c '
+  GIO_USE_VFS=local dbus-run-session -- bash -c '
     dconf write /org/gnome/desktop/search-providers/disabled "['"'"'org.gnome.clocks.desktop'"'"']"
     gsettings set org.gnome.desktop.interface show-battery-percentage true
     gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type "nothing"
