@@ -56,3 +56,7 @@ keybind = unconsumed:ctrl+h=goto_split:left
 keybind = unconsumed:ctrl+l=goto_split:right
 
 theme = Catppuccin Mocha
+
+# Fix bad yellow mouse highlight color
+selection-foreground = #cdd6f4
+selection-background = #585b70
