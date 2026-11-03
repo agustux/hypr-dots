@@ -481,6 +481,9 @@ sudo install -Dm644 "$HOME/.config/tlp/00-custom.conf" /etc/tlp.d/00-custom.conf
 sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
 sudo systemctl enable tlp.service
 
+# Install NetworkManager MAC randomization
+sudo install -Dm644 "$HOME/.config/NetworkManager/mac-randomize.conf" /etc/NetworkManager/conf.d/mac-randomize.conf
+
 # Install undervolt config
 if [ "$UNDERVOLT_SUPPORTED" -eq 1 ]; then
   sudo install -Dm644 "$HOME/.config/intel-undervolt/intel-undervolt.conf" /etc/intel-undervolt.conf
