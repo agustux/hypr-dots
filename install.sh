@@ -257,10 +257,10 @@ done
 [ "${#TO_REMOVE[@]}" -gt 0 ] && sudo pacman -Rns --noconfirm "${TO_REMOVE[@]}"
 
 # Package sets
-PKGS_WM_COMMON=(xdg-desktop-portal-gtk hyprpolkitagent hyprlock grim slurp wl-clipboard dunst brightnessctl jq)
+PKGS_WM_COMMON=(xdg-desktop-portal-gtk hyprlock grim slurp wl-clipboard dunst brightnessctl jq)
 
-PKGS_SWAY=(sway xdg-desktop-portal-wlr swayidle swaybg sway-contrib wl-mirror)
-PKGS_HYPR=(hyprland xdg-desktop-portal-hyprland hypridle hyprpaper hyprshutdown libnotify)
+PKGS_SWAY=(sway xdg-desktop-portal-wlr swayidle swaybg polkit-gnome sway-contrib wl-mirror)
+PKGS_HYPR=(hyprland xdg-desktop-portal-hyprland hypridle hyprpaper hyprshutdown hyprpolkitagent libnotify)
 PKGS_GNOME=(gdm gnome-shell gnome-control-center gnome-session gnome-backgrounds xdg-desktop-portal-gnome dconf)
 PKGS_NVIM=(neovim ripgrep fd tree-sitter-cli lua-language-server bash-language-server pyright clang markdown-oxide)
 
