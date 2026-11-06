@@ -203,6 +203,7 @@ FORCE_NVIDIA=0
 SWAY=0
 HYPR=1
 UPDATE=0
+PRINT=0
 for arg in "$@"; do
   case "$arg" in
     --bloat) BLOAT=1 ;;
@@ -210,9 +211,10 @@ for arg in "$@"; do
     --gnome) GNOME=1 ;;
     --noswap) NOSWAP=1 ;;
     --nvidia) FORCE_NVIDIA=1 ;;
+    --print) PRINT=1 ;;
     --sway) SWAY=1; HYPR=0 ;;
     --update) UPDATE=1 ;;
-    *) msg_err "Unknown flag: $arg\nValid: --bloat --foot --gnome --noswap --nvidia --sway --update"; exit 1 ;;
+    *) msg_err "Unknown flag: $arg\nValid: --bloat --foot --gnome --noswap --nvidia --print --sway --update"; exit 1 ;;
   esac
 done
 
@@ -272,6 +274,7 @@ PKGS_GUI=(networkmanager-dmenu tlp pavucontrol nm-connection-editor blueman baob
   nautilus loupe decibels snapshot vlc vlc-plugins-all gnome-calculator gnome-clocks papers brave-origin-bin)
 PKGS_CLI=(curl less man-db ufw rsync powertop nvtop zip unzip cpupower fastfetch bash-completion tar-scripts
   exfatprogs libcamera gst-plugin-libcamera pipewire-libcamera libcamera-tools libcamera-ipa xorg-xhost alsa-utils)
+PKGS_PRINT=(cups system-config-printer cups-pk-helper ghostscript brlaser avahi nss-mdns)
 
 PKGS_INTEL=(intel-gpu-tools vulkan-intel lib32-vulkan-intel intel-media-driver libva-intel-driver)
 PKGS_AMD=(vulkan-radeon lib32-vulkan-radeon)
@@ -306,6 +309,7 @@ PKGS=(
 [ "$HYPR" -eq 1 ] && PKGS+=("${PKGS_HYPR[@]}")
 [ "$FOOT" -eq 1 ] && PKGS+=(foot) || PKGS+=(ghostty)
 [ "$GNOME" -eq 1 ] && PKGS+=("${PKGS_GNOME[@]}")
+[ "$PRINT" -eq 1 ] && PKGS+=("${PKGS_PRINT[@]}")
 [ "$NEEDS_BROADCOM_WL" -eq 1 ] && PKGS+=("${PKGS_BROADCOM[@]}")
 [ "$IS_T2" -eq 1 ] && PKGS+=("${PKGS_T2[@]}")
 
@@ -351,10 +355,16 @@ if [ "$BLOAT" -eq 1 ]; then
   sudo ufw allow 53317/udp
 fi
 sudo systemctl enable --now ufw.service
+[ "$PRINT" -eq 1 ] && sudo ufw allow 5353/udp
 sudo ufw --force enable
 
 # Bluetooth service (same as archinstall)
 sudo systemctl enable bluetooth.service
+if [ "$PRINT" -eq 1 ]; then
+  sudo systemctl enable cups.service avahi-daemon.service
+  grep -q mdns_minimal /etc/nsswitch.conf || \
+    sudo sed -i 's/^\(hosts:[[:space:]]*\)/\1mdns_minimal [NOTFOUND=return] /' /etc/nsswitch.conf
+fi
 
 # PipeWire user units (same symlinks as archinstall)
 mkdir -p "$HOME/.config/systemd/user/default.target.wants"
