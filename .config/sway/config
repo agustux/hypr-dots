@@ -26,7 +26,7 @@ exec swayidle -w
 
 include /etc/sway/config.d/*
 exec dbus-update-activation-environment --systemd PATH
-exec /usr/lib/hyprpolkitagent/hyprpolkitagent
+exec /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
 exec gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
 exec gsettings set org.gnome.desktop.interface gtk-theme "adw-gtk3"
 exec xhost +SI:localuser:root
