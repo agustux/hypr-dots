@@ -183,14 +183,14 @@ grub_set_default() {
 }
 
 # Dotfiles update/installer function
-DOTS_DIR="$HOME/.local/share/hypr-dots"
+DOTS_DIR="$HOME/.local/share/dots"
 deploy_dotfiles() {
   mkdir -p "$HOME/.local/share" "$HOME/.config"
   if [ -d "$DOTS_DIR/.git" ]; then
     git -C "$DOTS_DIR" pull --ff-only --recurse-submodules || return 1
     git -C "$DOTS_DIR" submodule update --init --recursive || return 1
   else
-    git clone --recurse-submodules https://github.com/agustux/hypr-dots.git "$DOTS_DIR" || return 1
+    git clone --recurse-submodules https://github.com/agustux/dots.git "$DOTS_DIR" || return 1
   fi
   git -C "$DOTS_DIR" submodule update --init --remote || return 1
 

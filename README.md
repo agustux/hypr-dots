@@ -12,7 +12,7 @@ This should preferably run after a clean arch install
 
 ### Quickstart:
 ```
-curl -fsSL https://raw.githubusercontent.com/agustux/hypr-dots/main/install.sh | bash -s -- <flags here>
+curl -fsSL https://raw.githubusercontent.com/agustux/dots/main/install.sh | bash -s -- <flags here>
 ```
 Flags:
 - `--nvidia`  Install NVIDIA drivers/config
@@ -96,4 +96,4 @@ Pick the session at the display manager (ly's stock "Sway" entry works).
 | `Super + S` | Toggle **s**cratchpad |
 | `Super + Shift + S` | Move window to **s**cratchpad |
 
-![Example of my rice](https://github.com/agustux/hypr-dots/blob/main/assets/2026-09-11-142304_hyprshot.png)
+![Example of my rice](https://github.com/agustux/dots/blob/main/assets/2026-09-11-142304_hyprshot.png)
