@@ -22,6 +22,7 @@ Flags:
 - `--noswap`  Skip creating the 4GB swapfile, for really storage constrained systems 
 - `--update`  Only update dotfiles (for existing installs)
 - `--sway`    Also install Sway and its packages (Hyprland stays installed)
+- `--printer` Install CUPS printing and Avahi/mDNS discovery (not included in `--bloat`)
 
 The installer may modify your system configuration and will install
 packages. Review install.sh before running it if you want to see exactly
