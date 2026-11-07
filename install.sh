@@ -490,6 +490,9 @@ cmdline_set_param vt.default_blu "46,168,161,175,250,231,213,244,112,168,161,175
 sudo install -Dm644 "$HOME/.config/tlp/00-custom.conf" /etc/tlp.d/00-custom.conf
 sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
 sudo systemctl enable tlp.service
+# Use user config for sudo nvim too
+sudo mkdir -p /root/.config
+sudo ln -sfn "$HOME/.config/nvim" /root/.config/nvim
 
 # Install NetworkManager MAC randomization
 sudo install -Dm644 "$HOME/.config/NetworkManager/mac-randomize.conf" /etc/NetworkManager/conf.d/mac-randomize.conf
