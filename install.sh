@@ -254,7 +254,7 @@ GNOME=0
 NOSWAP=0
 FORCE_NVIDIA=0
 SWAY=0
-HYPR=1
+HYPR=0
 UPDATE=0
 PRINT=0
 for arg in "$@"; do
@@ -262,12 +262,13 @@ for arg in "$@"; do
     --bloat) BLOAT=1 ;;
     --foot) FOOT=1 ;;
     --gnome) GNOME=1 ;;
+    --hypr) HYPR=1 ;;
     --noswap) NOSWAP=1 ;;
     --nvidia) FORCE_NVIDIA=1 ;;
     --print) PRINT=1 ;;
-    --sway) SWAY=1; HYPR=0 ;;
+    --sway) SWAY=1 ;;
     --update) UPDATE=1 ;;
-    *) msg_err "Unknown flag: $arg\nValid: --bloat --foot --gnome --noswap --nvidia --print --sway --update"; exit 1 ;;
+    *) msg_err "Unknown flag: $arg\nValid: --bloat --foot --gnome --hypr --noswap --nvidia --print --sway --update"; exit 1 ;;
   esac
 done
 
@@ -280,6 +281,11 @@ fi
 
 # Install GNOME, Sway and Hyprland if --bloat used
 [ "$BLOAT" -eq 1 ] && { GNOME=1; SWAY=1; HYPR=1; }
+# No session flag: default to Hyprland
+[ "$GNOME" -eq 0 ] && [ "$SWAY" -eq 0 ] && HYPR=1
+# 1 if any non-GNOME session (Sway/Hyprland) is being installed
+WM=0
+{ [ "$HYPR" -eq 1 ] || [ "$SWAY" -eq 1 ]; } && WM=1
 
 # NVIDIA presence detection (vendor ID 10de = NVIDIA) with --nvidia override
 NVIDIA=0
@@ -312,21 +318,24 @@ done
 [ "${#TO_REMOVE[@]}" -gt 0 ] && sudo pacman -Rns --noconfirm "${TO_REMOVE[@]}"
 
 # Package sets
-PKGS_WM_COMMON=(xdg-desktop-portal-gtk hyprlock grim slurp wl-clipboard dunst brightnessctl jq)
+PKGS_WM_COMMON=(xdg-desktop-portal-gtk grim slurp wl-clipboard dunst brightnessctl jq libnotify
+    waybar hyprlock hyprqt6engine rofi-bluetooth-git networkmanager-dmenu ly seatd nm-connection-editor
+    blueman pavucontrol)
 
 PKGS_SWAY=(sway xdg-desktop-portal-wlr swayidle swaybg polkit-gnome sway-contrib wl-mirror)
-PKGS_HYPR=(hyprland xdg-desktop-portal-hyprland hypridle hyprpaper hyprshutdown hyprpolkitagent libnotify)
+PKGS_HYPR=(hyprland xdg-desktop-portal-hyprland hypridle hyprpaper hyprpolkitagent hyprshutdown)
 PKGS_GNOME=(gdm gnome-shell gnome-control-center gnome-session gnome-backgrounds xdg-desktop-portal-gnome dconf)
 PKGS_NVIM=(neovim ripgrep fd tree-sitter-cli lua-language-server bash-language-server pyright clang markdown-oxide)
 
 PKGS_AUDIO=(pipewire pipewire-alsa pipewire-jack pipewire-pulse gst-plugin-pipewire libpulse wireplumber sof-firmware alsa-firmware)
-PKGS_SESSION=(gnome-keyring ly seatd bluez bluez-utils plymouth)
-PKGS_THEME=(hyprqt6engine qt6ct qt6-wayland adw-gtk-theme ttf-dejavu ttf-jetbrains-mono-nerd
-  ttf-nerd-fonts-symbols-mono ttf-nerd-fonts-symbols noto-fonts-emoji waybar rofi rofi-bluetooth-git)
-PKGS_GUI=(networkmanager-dmenu tlp pavucontrol nm-connection-editor blueman baobab gnome-disk-utility
-  nautilus loupe decibels snapshot vlc vlc-plugins-all gnome-calculator gnome-clocks papers brave-origin-bin)
-PKGS_CLI=(curl less man-db ufw rsync powertop nvtop zip unzip cpupower fastfetch bash-completion tar-scripts
-  exfatprogs libcamera gst-plugin-libcamera pipewire-libcamera libcamera-tools libcamera-ipa xorg-xhost alsa-utils)
+PKGS_SESSION=(gnome-keyring bluez bluez-utils plymouth)
+PKGS_THEME=(qt6ct qt6-wayland adw-gtk-theme ttf-dejavu ttf-jetbrains-mono-nerd rofi ttf-nerd-fonts-symbols-mono
+    ttf-nerd-fonts-symbols noto-fonts-emoji)
+PKGS_GUI=(baobab gnome-disk-utility nautilus loupe decibels snapshot vlc vlc-plugins-all
+    gnome-calculator gnome-clocks papers brave-origin-bin)
+PKGS_CLI=(tlp curl less man-db ufw rsync powertop nvtop zip unzip cpupower fastfetch bash-completion
+    tar-scripts exfatprogs libcamera gst-plugin-libcamera pipewire-libcamera libcamera-tools
+    libcamera-ipa xorg-xhost alsa-utils)
 PKGS_PRINT=(cups system-config-printer cups-pk-helper ghostscript brlaser avahi nss-mdns)
 
 PKGS_INTEL=(intel-gpu-tools vulkan-intel lib32-vulkan-intel intel-media-driver libva-intel-driver)
@@ -346,10 +355,8 @@ PKGS_BLOAT=(proton-vpn-gtk-app obs-studio windscribe-v2-bin localsend-bin ventoy
   lib32-libpipewire lib32-alsa-lib lib32-alsa-plugins)
 
 # Assemble install list
-# Assemble install list
 PKGS=(
     "${KERNEL_HEADERS[@]}"
-    "${PKGS_WM_COMMON[@]}"
     "${PKGS_NVIM[@]}"
     "${PKGS_AUDIO[@]}"
     "${PKGS_SESSION[@]}"
@@ -358,6 +365,7 @@ PKGS=(
     "${PKGS_CLI[@]}"
 )
 
+[ "$WM" -eq 1 ] && PKGS+=("${PKGS_WM_COMMON[@]}")
 [ "$SWAY" -eq 1 ] && PKGS+=("${PKGS_SWAY[@]}")
 [ "$HYPR" -eq 1 ] && PKGS+=("${PKGS_HYPR[@]}")
 [ "$FOOT" -eq 1 ] && PKGS+=(foot) || PKGS+=(ghostty)
@@ -425,8 +433,10 @@ ln -sf /usr/lib/systemd/user/pipewire-pulse.service "$HOME/.config/systemd/user/
 ln -sf /usr/lib/systemd/user/pipewire-pulse.socket "$HOME/.config/systemd/user/default.target.wants/pipewire-pulse.socket"
 
 # Seat access (seatd, same as archinstall)
-sudo systemctl enable seatd.service
-sudo usermod -aG seat "$USER"
+if [ "$WM" -eq 1 ]; then
+  sudo systemctl enable seatd.service
+  sudo usermod -aG seat "$USER"
+fi
 
 # Chrultrabook Fixes (if chromebook)
 if [ "$IS_CHROMEBOOK" -eq 1 ]; then
@@ -486,7 +496,7 @@ if [ "$GNOME" -eq 1 ]; then
   TERM_BIN=ghostty; [ "$FOOT" -eq 1 ] && TERM_BIN=foot
   gnome_apply_hypr_binds "$TERM_BIN"
 fi
-[ "$GNOME" -eq 0 ] && sudo systemctl enable ly@tty1.service
+[ "$GNOME" -eq 0 ] && sudo systemctl enable ly@tty1.service  # GNOME=0 implies WM=1
 
 ####################################################################################################
 # DOTFILES & FINALIZE
@@ -580,10 +590,12 @@ if [ "$IS_INTEL" -eq 1 ] || [ "$BLOAT" -eq 1 ]; then KMS_MODULES+=(i915); fi
 if [ "$NVIDIA" -eq 1 ]; then KMS_MODULES+=(nvidia nvidia_modeset nvidia_uvm nvidia_drm); fi
 mkinitcpio_append_modules "${KMS_MODULES[@]}"
 
-# Ly config installation
-sudo install -d /etc/ly
-sudo ln -sf "$HOME/.config/ly/config.ini" /etc/ly/config.ini
-sudo install -Dm644 "$HOME/.config/ly/ly-override.conf" /etc/systemd/system/ly@tty1.service.d/override.conf
+# Ly config installation (only when ly is installed)
+if [ "$WM" -eq 1 ]; then
+  sudo install -d /etc/ly
+  sudo ln -sf "$HOME/.config/ly/config.ini" /etc/ly/config.ini
+  sudo install -Dm644 "$HOME/.config/ly/ly-override.conf" /etc/systemd/system/ly@tty1.service.d/override.conf
+fi
 
 # Copying GRUB config/theme
 sudo mkdir -p /boot/grub/themes/catppuccin-mocha
