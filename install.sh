@@ -99,6 +99,17 @@ ensure_yay() {
   return 1
 }
 
+# Enable multilib (required by lib32-* packages)
+ensure_multilib() {
+  grep -q '^\[multilib\]' /etc/pacman.conf && return 0
+  if grep -q '^#\[multilib\]' /etc/pacman.conf; then
+    sudo sed -i '/^#\[multilib\]/,/^#Include/ s/^#//' /etc/pacman.conf
+  else
+    printf '\n[multilib]\nInclude = /etc/pacman.d/mirrorlist\n' | sudo tee -a /etc/pacman.conf > /dev/null
+  fi
+  sudo pacman -Syu --noconfirm
+}
+
 # render_tmpl <src> <VAR> <value> <dst>: replace @VAR@ in src, write dst
 render_tmpl() {
   sed "s|@$2@|$3|g" "$1" > "$4"
@@ -208,6 +219,12 @@ deploy_dotfiles() {
   fi
 }
 
+# dots_state: print dotfiles repo + submodule revisions (for change detection)
+dots_state() {
+  git -C "$DOTS_DIR" rev-parse HEAD 2>/dev/null
+  git -C "$DOTS_DIR" submodule status --recursive 2>/dev/null
+}
+
 # Intel undervolt support detection (i3/i5/i7/i9, 4th-10th gen)
 CPU_MODEL=$(grep -m1 "model name" /proc/cpuinfo)
 NUM=$(echo "$CPU_MODEL" | grep -oP 'i[3579]-\K[0-9]{4,5}')
@@ -250,6 +267,7 @@ NEEDS_BROADCOM_WL=0
 BLOAT=0
 FOOT=0
 GNOME=0
+GRAPHICS=0
 NOSWAP=0
 FORCE_NVIDIA=0
 SWAY=0
@@ -261,20 +279,31 @@ for arg in "$@"; do
     --bloat) BLOAT=1 ;;
     --foot) FOOT=1 ;;
     --gnome) GNOME=1 ;;
+    --graphics) GRAPHICS=1 ;;
     --hypr) HYPR=1 ;;
     --noswap) NOSWAP=1 ;;
     --nvidia) FORCE_NVIDIA=1 ;;
     --print) PRINT=1 ;;
     --sway) SWAY=1 ;;
     --update) UPDATE=1 ;;
-    *) msg_err "Unknown flag: $arg\nValid: --bloat --foot --gnome --hypr --noswap --nvidia --print --sway --update"; exit 1 ;;
+    *)
+      valid="--bloat --foot --gnome --graphics --hypr"
+      valid+=" --noswap --nvidia --print --sway --update"
+      msg_err "Unknown flag: $arg\nValid: $valid"
+      exit 1
+      ;;
   esac
 done
 
 # Just update dots if --update used
 if [ "$UPDATE" -eq 1 ]; then
+  before=$(dots_state)
   deploy_dotfiles || exit 1
-  msg_ok "Dotfiles updated, reboot to apply changes"
+  if [ "$before" = "$(dots_state)" ]; then
+    msg_ok "Dotfiles already up to date"
+  else
+    msg_ok "Dotfiles updated, reboot to apply changes"
+  fi
   exit 0
 fi
 
@@ -305,6 +334,8 @@ done
 # PACKAGE INSTALLS
 ####################################################################################################
 
+# Adding multilib repo if not already enabled
+ensure_multilib || exit 1
 # Installing yay (AUR helper)
 ensure_yay || exit 1
 
@@ -348,10 +379,10 @@ PKGS_NVIDIA=(nvidia-utils lib32-nvidia-utils nvidia-open-dkms)
 PKGS_NVIDIA_LEGACY=(nvidia-580xx-utils lib32-nvidia-580xx-utils nvidia-580xx-dkms)
 
 PKGS_BLOAT=(proton-vpn-gtk-app obs-studio windscribe-v2-bin localsend-bin ventoy-bin yt-dlp
-  android-udev android-tools gvfs-mtp libmtp scrcpy gnirehtet-bin opencode
-  mesa lib32-mesa vulkan-icd-loader lib32-vulkan-icd-loader libdrm lib32-libdrm lib32-glibc
-  lib32-gcc-libs lib32-libglvnd lib32-wayland lib32-libx11 lib32-libxcb lib32-libpulse
-  lib32-libpipewire lib32-alsa-lib lib32-alsa-plugins)
+    android-udev android-tools gvfs-mtp libmtp scrcpy gnirehtet-bin opencode)
+PKGS_GRAPHICS=(mesa lib32-mesa vulkan-icd-loader lib32-vulkan-icd-loader libdrm lib32-libdrm
+    lib32-glibc lib32-gcc-libs lib32-libglvnd lib32-wayland lib32-libx11 lib32-libxcb
+    lib32-libpulse lib32-libpipewire lib32-alsa-lib lib32-alsa-plugins)
 
 # Assemble install list
 PKGS=(
@@ -386,6 +417,8 @@ if [ "$IS_INTEL_CPU" -eq 1 ] || [ "$BLOAT" -eq 1 ]; then PKGS+=("${PKGS_UCODE_IN
 if [ "$IS_AMD_CPU" -eq 1 ] || [ "$BLOAT" -eq 1 ]; then PKGS+=("${PKGS_UCODE_AMD[@]}"); fi
 
 [ "$BLOAT" -eq 1 ] && PKGS+=("${PKGS_BLOAT[@]}")
+{ [ "$GRAPHICS" -eq 1 ] || [ "$BLOAT" -eq 1 ]; } && PKGS+=("${PKGS_GRAPHICS[@]}")
+
 if [ "$NVIDIA" -eq 1 ]; then
   if [ "$(nvidia_is_legacy)" -eq 1 ]; then
     PKGS+=("${PKGS_NVIDIA_LEGACY[@]}")
