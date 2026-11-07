@@ -144,7 +144,6 @@ _gnome_set_hypr_binds() {
     "term|$1|<Super>q"
     "files|nautilus|<Super>e"
     "browser|brave-origin|<Super>b"
-    "launcher|rofi -show drun|<Super>r"
     "logout|gnome-session-quit --logout --no-prompt|<Super>m"
   )
   for b in "${binds[@]}"; do
@@ -319,7 +318,7 @@ done
 
 # Package sets
 PKGS_WM_COMMON=(xdg-desktop-portal-gtk grim slurp wl-clipboard dunst brightnessctl jq libnotify
-    waybar hyprlock hyprqt6engine rofi-bluetooth-git networkmanager-dmenu ly seatd nm-connection-editor
+    waybar hyprlock hyprqt6engine rofi rofi-bluetooth-git networkmanager-dmenu ly seatd nm-connection-editor
     blueman pavucontrol)
 
 PKGS_SWAY=(sway xdg-desktop-portal-wlr swayidle swaybg polkit-gnome sway-contrib wl-mirror)
@@ -329,7 +328,7 @@ PKGS_NVIM=(neovim ripgrep fd tree-sitter-cli lua-language-server bash-language-s
 
 PKGS_AUDIO=(pipewire pipewire-alsa pipewire-jack pipewire-pulse gst-plugin-pipewire libpulse wireplumber sof-firmware alsa-firmware)
 PKGS_SESSION=(gnome-keyring bluez bluez-utils plymouth)
-PKGS_THEME=(qt6ct qt6-wayland adw-gtk-theme ttf-dejavu ttf-jetbrains-mono-nerd rofi ttf-nerd-fonts-symbols-mono
+PKGS_THEME=(qt6ct qt6-wayland adw-gtk-theme ttf-dejavu ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols-mono
     ttf-nerd-fonts-symbols noto-fonts-emoji)
 PKGS_GUI=(baobab gnome-disk-utility nautilus loupe decibels snapshot vlc vlc-plugins-all
     gnome-calculator gnome-clocks papers brave-origin-bin)
