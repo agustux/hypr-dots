@@ -109,6 +109,59 @@ write_if_missing() {
   [ -f "$1" ] || cat > "$1"
 }
 
+# _gnome_set_hypr_binds <terminal>: mirror Hyprland binds in GNOME (inner, needs a session bus)
+_gnome_set_hypr_binds() {
+  local KB=org.gnome.desktop.wm.keybindings SH=org.gnome.shell.keybindings
+  local MK=org.gnome.settings-daemon.plugins.media-keys
+  local P=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings
+  local i k b name cmd key list=()
+
+  # Free conflicting defaults
+  gsettings set $SH toggle-message-tray '[]'
+  gsettings set $SH toggle-quick-settings '[]'
+  gsettings set $MK video-out "['XF86Display']"
+  gsettings set $KB minimize '[]'
+
+  # Dynamic workspaces: Super+N / Super+Shift+N
+  gsettings set org.gnome.mutter dynamic-workspaces true
+  for i in {1..10}; do
+    k=$((i % 10))
+    [ "$i" -le 9 ] && gsettings set $SH switch-to-application-$i '[]'
+    gsettings set $KB switch-to-workspace-$i "['<Super>$k']"
+    gsettings set $KB move-to-workspace-$i "['<Super><Shift>$k']"
+  done
+
+  # Windows, lock, screenshots
+  gsettings set $KB close "['<Super>c', '<Alt>F4']"
+  gsettings set $KB toggle-fullscreen "['<Super>f']"
+  gsettings set $MK screensaver "['<Super><Shift>q']"
+  gsettings set $SH show-screenshot-ui "['Print', '<Super><Shift>p']"
+  gsettings set $SH screenshot-window "['<Alt>Print', '<Super><Alt>p']"
+  gsettings set $SH screenshot "['<Super>Print', '<Super><Control>p']"
+
+  # App binds: name|command|binding
+  local binds=(
+    "term|$1|<Super>q"
+    "files|nautilus|<Super>e"
+    "browser|brave-origin|<Super>b"
+    "launcher|rofi -show drun|<Super>r"
+    "logout|gnome-session-quit --logout --no-prompt|<Super>m"
+  )
+  for b in "${binds[@]}"; do
+    IFS='|' read -r name cmd key <<< "$b"
+    gsettings set $MK.custom-keybinding:$P/$name/ name "$name"
+    gsettings set $MK.custom-keybinding:$P/$name/ command "$cmd"
+    gsettings set $MK.custom-keybinding:$P/$name/ binding "$key"
+    list+=("'$P/$name/'")
+  done
+  gsettings set $MK custom-keybindings "[$(IFS=,; echo "${list[*]}")]"
+}
+
+# gnome_apply_hypr_binds <terminal>: runs the above in its own session bus (safe from a TTY)
+gnome_apply_hypr_binds() {
+  GIO_USE_VFS=local dbus-run-session -- bash -c "$(declare -f _gnome_set_hypr_binds); _gnome_set_hypr_binds \"\$@\"" _ "$@"
+}
+
 # grub_set_default <KEY> <value>: set (or uncomment, or append) KEY=value in /etc/default/grub
 grub_set_default() {
   local key="$1" val="$2" f=/etc/default/grub
@@ -430,6 +483,8 @@ if [ "$GNOME" -eq 1 ]; then
     gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
     gsettings set org.gnome.desktop.interface accent-color "blue"
   '
+  TERM_BIN=ghostty; [ "$FOOT" -eq 1 ] && TERM_BIN=foot
+  gnome_apply_hypr_binds "$TERM_BIN"
 fi
 [ "$GNOME" -eq 0 ] && sudo systemctl enable ly@tty1.service
 
