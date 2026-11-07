@@ -122,9 +122,8 @@ _gnome_set_hypr_binds() {
   gsettings set $MK video-out "['XF86Display']"
   gsettings set $KB minimize '[]'
 
-  # Static workspaces: Super+N / Super+Shift+N
-  gsettings set org.gnome.mutter dynamic-workspaces false
-  gsettings set org.gnome.desktop.wm.preferences num-workspaces 10
+  # Dynamic workspaces: Super+N / Super+Shift+N
+  gsettings set org.gnome.mutter dynamic-workspaces true
   for i in {1..10}; do
     k=$((i % 10))
     [ "$i" -le 9 ] && gsettings set $SH switch-to-application-$i '[]'
